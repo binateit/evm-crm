@@ -21,6 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Distributor login endpoint
+          console.log("[Auth] API Base URL:", env.apiBaseUrl);
           const loginUrl = `${env.apiBaseUrl}/v1/auth/distributor/login`;
           console.log("[Auth] Attempting distributor login to:", loginUrl);
 
