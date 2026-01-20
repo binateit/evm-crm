@@ -1,0 +1,117 @@
+/* CSS Layers for style isolation */
+@layer tailwind-base, shadcn-base, custom;
+
+@layer tailwind-base {
+  @import "tailwindcss";
+}
+
+@layer shadcn-base {
+  /* shadcn/ui base styles */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+}
+
+@layer custom {
+  /* Original root styles */
+  :root {
+    --background-hex: #ffffff;
+    --foreground-hex: #171717;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background-hex: #0a0a0a;
+      --foreground-hex: #ededed;
+    }
+  }
+
+  body {
+    background: var(--background-hex);
+    color: var(--foreground-hex);
+    font-family: var(--font-poppins), "Poppins", sans-serif;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background-hex);
+  --color-foreground: var(--foreground-hex);
+  --font-sans: var(--font-poppins);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Sidebar scrollbar - darker */
+aside ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+aside ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+aside ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
