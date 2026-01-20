@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         try {
           // Distributor login endpoint
-          const loginUrl = `${env.apiBaseUrl}/v1/auth/Distributor/login`;
+          const loginUrl = `${env.apiBaseUrl}/v1/auth/distributor/login`;
           console.log("[Auth] Attempting distributor login to:", loginUrl);
 
           const response = await fetch(loginUrl, {
@@ -30,7 +30,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userName: credentials.email, // API expects userName, not email
+              usernameOrEmail: credentials.email, // API expects userName, not email
               password: credentials.password,
             }),
           });
