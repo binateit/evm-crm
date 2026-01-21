@@ -3,42 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { promotionService } from "@/lib/api/services";
-import type { PromotionDto, PromotionPaginationResponse } from "@/types/crm";
+import type { PromotionDto } from "@/types";
 import { PageHeader, PageBreadcrumb, Card, CardContent } from "@/components/ui";
 import { formatDate } from "@/lib/utils/formatters";
 import { Tag, Calendar, ChevronRight, Gift, Percent } from "lucide-react";
-import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
-import { Button } from "primereact/button";
 
 export default function PromotionsPage() {
-  const [promotions, setPromotions] = useState<PromotionPaginationResponse>({
-    data: [],
-    pagination: {
-      totalCount: 0,
-      pageSize: 12,
-      currentPage: 1,
-      totalPages: 0,
-      hasPreviousPage: false,
-      hasNextPage: false,
-    },
-  });
+  const [filteredPromotions, setFilteredPromotions] = useState<PromotionDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [keyword, setKeyword] = useState("");
   const [activeFilter, setActiveFilter] = useState<boolean | null>(true);
 
   useEffect(() => {
     async function fetchPromotions() {
       try {
         setLoading(true);
-        const data = await promotionService.search({
-          pageNumber: page,
-          pageSize: 12,
-          keyword: keyword || null,
-          isActive: activeFilter,
-        });
-        setPromotions(data);
+        const data = await promotionService.getMyPromotions(activeFilter ?? true);
+        setFilteredPromotions(data);
       } catch (err) {
         console.error("Error fetching promotions:", err);
       } finally {
@@ -47,37 +28,31 @@ export default function PromotionsPage() {
     }
 
     fetchPromotions();
-  }, [page, keyword, activeFilter]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-  };
+  }, [activeFilter]);
 
   const breadcrumbItems = [{ label: "Promotions", url: "/promotions" }];
 
   const activeOptions = [
     { label: "Active Only", value: true },
-    { label: "Inactive Only", value: false },
-    { label: "All", value: null },
+    { label: "All Promotions", value: null },
   ];
 
   return (
     <div className="space-y-4">
       <PageBreadcrumb items={breadcrumbItems} />
-      <PageHeader title="Promotions" subtitle="View available promotions and offers" />
+      <PageHeader
+        title="My Promotions"
+        subtitle="View promotions available for your allocated products"
+      />
 
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+          <div className="flex items-center justify-between">
             <div className="flex-1">
-              <InputText
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Search promotions..."
-                className="w-full"
-              />
+              <p className="text-sm text-gray-600">
+                Showing promotions for products in your allocated sub-categories
+              </p>
             </div>
             <div className="w-full sm:w-48">
               <Dropdown
@@ -85,14 +60,12 @@ export default function PromotionsPage() {
                 options={activeOptions}
                 onChange={(e) => {
                   setActiveFilter(e.value);
-                  setPage(1);
                 }}
-                placeholder="Status"
+                placeholder="Filter"
                 className="w-full"
               />
             </div>
-            <Button type="submit" label="Search" icon="pi pi-search" className="w-full sm:w-auto" />
-          </form>
+          </div>
         </CardContent>
       </Card>
 
@@ -101,44 +74,24 @@ export default function PromotionsPage() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : promotions.data.length === 0 ? (
+      ) : filteredPromotions.length === 0 ? (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <Tag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No promotions found</p>
+              <Gift className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No promotions available at the moment</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Check back later for new offers and promotions
+              </p>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {promotions.data.map((promotion) => (
-              <PromotionCard key={promotion.id} promotion={promotion} />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {promotions.pagination.totalPages > 1 && (
-            <div className="flex justify-center gap-2">
-              <Button
-                icon="pi pi-chevron-left"
-                outlined
-                disabled={!promotions.pagination.hasPreviousPage}
-                onClick={() => setPage(page - 1)}
-              />
-              <span className="flex items-center px-4 text-sm text-gray-600">
-                Page {promotions.pagination.currentPage} of {promotions.pagination.totalPages}
-              </span>
-              <Button
-                icon="pi pi-chevron-right"
-                outlined
-                disabled={!promotions.pagination.hasNextPage}
-                onClick={() => setPage(page + 1)}
-              />
-            </div>
-          )}
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredPromotions.map((promotion) => (
+            <PromotionCard key={promotion.id} promotion={promotion} />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -206,7 +159,7 @@ function PromotionCard({ promotion }: { promotion: PromotionDto }) {
           <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1">
             {promotion.promotionName}
           </h3>
-          <p className="text-xs text-gray-500 mb-3">{promotion.promotionCode}</p>
+          <p className="text-xs text-gray-500 mb-3">{promotion.promotionTypeName}</p>
 
           {promotion.description && (
             <p className="text-sm text-gray-600 mb-3 line-clamp-2">{promotion.description}</p>

@@ -7,15 +7,24 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
-  ShoppingCart,
-  Tag,
   User,
   X,
   ChevronDown,
   ChevronRight,
-  MapPin,
+  FileText,
+  Receipt,
+  CreditCard,
+  DollarSign,
+  Target,
+  Package,
+  BarChart3,
+  Gift,
+  Newspaper,
+  HeadphonesIcon,
+  Users,
+  FilePlus,
   Clock,
-  CheckCircle,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -39,28 +48,82 @@ const navItems: NavItem[] = [
     href: "/dashboard",
   },
   {
-    icon: ShoppingCart,
-    label: "My Orders",
-    href: "/orders",
-    children: [
-      { label: "All Orders", href: "/orders", icon: ShoppingCart },
-      { label: "Pending Approval", href: "/orders/pending", icon: Clock },
-      { label: "Approved", href: "/orders/approved", icon: CheckCircle },
-    ],
+    icon: FilePlus,
+    label: "Create PO",
+    href: "/purchase-orders/create",
   },
   {
-    icon: Tag,
-    label: "Promotions",
+    icon: FileText,
+    label: "Draft POs",
+    href: "/purchase-orders/drafts",
+  },
+  {
+    icon: Clock,
+    label: "My Pending POs",
+    href: "/purchase-orders/pending",
+  },
+  {
+    icon: History,
+    label: "Purchase Order History",
+    href: "/purchase-orders/history",
+  },
+  {
+    icon: Receipt,
+    label: "My Invoices",
+    href: "/invoices",
+  },
+  {
+    icon: CreditCard,
+    label: "Ledger & Outstanding",
+    href: "/ledger",
+  },
+  {
+    icon: DollarSign,
+    label: "Price List",
+    href: "/pricing",
+  },
+  {
+    icon: Target,
+    label: "Target & Incentives",
+    href: "/targets",
+    children: [{ label: "View Targets", href: "/targets", icon: Target }],
+  },
+  {
+    icon: Package,
+    label: "Add / Update My Stock",
+    href: "/stock/update",
+  },
+  {
+    icon: BarChart3,
+    label: "My Stock Levels",
+    href: "/stock/levels",
+  },
+  {
+    icon: Gift,
+    label: "Promotions & Offers",
     href: "/promotions",
+    children: [{ label: "View all promotions", href: "/promotions", icon: Gift }],
+  },
+  {
+    icon: Newspaper,
+    label: "News & Engagements",
+    href: "/news",
+    children: [{ label: "View all News", href: "/news", icon: Newspaper }],
+  },
+  {
+    icon: HeadphonesIcon,
+    label: "Support & Feedbacks",
+    href: "/support",
   },
   {
     icon: User,
     label: "Profile",
     href: "/profile",
-    children: [
-      { label: "My Profile", href: "/profile", icon: User },
-      { label: "Shipping Addresses", href: "/profile/addresses", icon: MapPin },
-    ],
+  },
+  {
+    icon: Users,
+    label: "My Contacts",
+    href: "/contacts",
   },
 ];
 

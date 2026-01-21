@@ -6,7 +6,7 @@ import type {
   UpdateShippingAddressCommand,
   DistributorShippingAddressDtoResult,
   DistributorShippingAddressDtoListResult,
-} from "@/types/crm";
+} from "@/types";
 import type { BooleanResult } from "@/types/common";
 
 export const shippingAddressService = {

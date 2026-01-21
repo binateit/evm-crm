@@ -4,7 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useDistributor } from "@/hooks/use-distributor";
 import { saleOrderService } from "@/lib/api/services";
-import type { SaleOrderDetailDto } from "@/types/crm";
+import type { SaleOrderDetailDto } from "@/types";
 import {
   PageHeader,
   PageBreadcrumb,

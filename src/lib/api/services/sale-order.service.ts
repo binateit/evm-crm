@@ -12,9 +12,60 @@ import type {
   SearchPendingDistributorApprovalQuery,
   SaleOrderDashboardSummaryDto,
   SaleOrderDashboardSummaryDtoResult,
-} from "@/types/crm";
+  CreateSaleOrderCommand,
+  UpdateSaleOrderCommand,
+  GuidResult,
+} from "@/types";
 
 export const saleOrderService = {
+  /**
+   * Create a new sale order
+   */
+  async create(data: CreateSaleOrderCommand): Promise<string> {
+    const response = await apiClient.post<GuidResult>(ENDPOINTS.SALE_ORDER.CREATE, data);
+
+    if (!response.data?.succeeded) {
+      throw new Error(response.data?.messages?.[0] || "Failed to create sale order");
+    }
+
+    return response.data?.data || "";
+  },
+
+  /**
+   * Update an existing sale order
+   */
+  async update(id: string, data: UpdateSaleOrderCommand): Promise<string> {
+    const response = await apiClient.put<GuidResult>(ENDPOINTS.SALE_ORDER.UPDATE(id), data);
+
+    if (!response.data?.succeeded) {
+      throw new Error(response.data?.messages?.[0] || "Failed to update sale order");
+    }
+
+    return response.data?.data || "";
+  },
+
+  /**
+   * Delete a sale order
+   */
+  async delete(id: string): Promise<void> {
+    const response = await apiClient.delete<GuidResult>(ENDPOINTS.SALE_ORDER.DELETE(id));
+
+    if (!response.data?.succeeded) {
+      throw new Error(response.data?.messages?.[0] || "Failed to delete sale order");
+    }
+  },
+
+  /**
+   * Submit a sale order for approval
+   */
+  async submit(id: string): Promise<void> {
+    const response = await apiClient.post<GuidResult>(ENDPOINTS.SALE_ORDER.SUBMIT(id));
+
+    if (!response.data?.succeeded) {
+      throw new Error(response.data?.messages?.[0] || "Failed to submit sale order");
+    }
+  },
+
   /**
    * Get sale orders for a specific distributor
    */
@@ -169,5 +220,60 @@ export const saleOrderService = {
     }
 
     return response.data?.data || null;
+  },
+
+  /**
+   * Get current distributor's orders by track (draft, pending, history)
+   * Uses "my" endpoints that auto-detect distributor from logged-in user
+   */
+  async getMyOrdersByTrack(
+    track: "draft" | "pending" | "history",
+    query: {
+      pageNumber?: number;
+      pageSize?: number;
+      keyword?: string;
+      fromOrderDate?: string;
+      toOrderDate?: string;
+      paymentTypeId?: number;
+      minAmount?: number;
+      maxAmount?: number;
+    } = {}
+  ): Promise<PaginatedResponse<SaleOrderListDto>> {
+    const response = await apiClient.post<SaleOrderListDtoPaginationResponseResult>(
+      ENDPOINTS.DISTRIBUTOR.MY_ORDERS_BY_TRACK(track),
+      {
+        pageNumber: query.pageNumber || 1,
+        pageSize: query.pageSize || 20,
+        ...query,
+      }
+    );
+
+    if (!response.data?.succeeded) {
+      throw new Error(response.data?.messages?.[0] || `Failed to fetch ${track} orders`);
+    }
+
+    return response.data?.data || { data: [], pagination: {} };
+  },
+
+  /**
+   * Get current distributor's order details by ID
+   * Uses "my" endpoint that validates order ownership
+   */
+  async getMyOrderById(orderId: string): Promise<SaleOrderDetailDto | null> {
+    try {
+      const response = await apiClient.get<SaleOrderDetailDtoResult>(
+        ENDPOINTS.DISTRIBUTOR.MY_ORDER_BY_ID(orderId)
+      );
+
+      if (!response.data?.succeeded) {
+        console.error("Failed to fetch order:", response.data?.messages?.[0]);
+        return null;
+      }
+
+      return response.data?.data || null;
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      return null;
+    }
   },
 };

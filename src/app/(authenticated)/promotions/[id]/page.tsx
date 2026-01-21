@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { promotionService } from "@/lib/api/services";
-import type { PromotionDetailDto } from "@/types/crm";
+import type { PromotionDetailDto } from "@/types";
 import {
   PageHeader,
   PageBreadcrumb,

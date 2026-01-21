@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useDistributor } from "@/hooks/use-distributor";
 import { distributorService } from "@/lib/api/services";
-import type { DistributorDto } from "@/types/crm";
+import type { DistributorDto } from "@/types";
 import {
   PageHeader,
   PageBreadcrumb,

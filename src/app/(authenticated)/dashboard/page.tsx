@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDistributor } from "@/hooks/use-distributor";
 import { saleOrderService } from "@/lib/api/services";
-import type { SaleOrderDashboardSummaryDto, SaleOrderListDto } from "@/types/crm";
+import type { SaleOrderDashboardSummaryDto, SaleOrderListDto } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { PageHeader } from "@/components/ui";
 import { ShoppingCart, Clock, CheckCircle, TrendingUp, Package, ArrowRight } from "lucide-react";

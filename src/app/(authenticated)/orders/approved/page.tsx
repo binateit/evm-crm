@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDistributor } from "@/hooks/use-distributor";
 import { saleOrderService } from "@/lib/api/services";
-import type { SaleOrderListDto } from "@/types/crm";
+import type { SaleOrderListDto } from "@/types";
 import type { PaginatedResponse } from "@/types/common";
 import { PageHeader, PageBreadcrumb } from "@/components/ui";
 import { AppDataTable, StatusBadge, CurrencyCell, DateCell } from "@/components/ui";

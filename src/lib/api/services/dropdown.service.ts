@@ -5,11 +5,13 @@ import type {
   DistrictDto,
   BrandDropdownDto,
   CategoryDropdownDto,
+  PaymentTypeDto,
   StateDtoListResult,
   DistrictDtoListResult,
   BrandDropdownDtoListResult,
   CategoryDropdownDtoListResult,
-} from "@/types/crm";
+  PaymentTypeDtoListResult,
+} from "@/types";
 
 export const dropdownService = {
   /**
@@ -149,6 +151,27 @@ export const dropdownService = {
       return response.data?.data || [];
     } catch (error) {
       console.error("Error fetching districts:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get list of payment types for dropdown
+   */
+  async getPaymentTypes(): Promise<PaymentTypeDto[]> {
+    try {
+      const response = await apiClient.get<PaymentTypeDtoListResult>(
+        ENDPOINTS.DROPDOWN.PAYMENT_TYPES
+      );
+
+      if (!response.data?.succeeded) {
+        console.error("Failed to fetch payment types:", response.data?.messages?.[0]);
+        return [];
+      }
+
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching payment types:", error);
       return [];
     }
   },

@@ -1,6 +1,12 @@
 // CRM Module Types for Distributor Portal
 import type { Result, PaginatedResponse } from "@/types/common";
 
+// Export order types
+export * from "./order.types";
+
+// Export validation types
+export * from "./sale-order-validation.types";
+
 // ============ Distributor Types ============
 
 export interface DistributorDto {
@@ -34,12 +40,38 @@ export interface DistributorDto {
   primarySalespersonName: string | null;
   secondarySalespersonId: string | null;
   secondarySalespersonName: string | null;
+  termsAcceptedAt: string | null;
 }
 
 export interface DistributorDropdownDto {
   id: string;
   distributorCode: string | null;
   distributorName: string | null;
+}
+
+// Distributor data for Sale Order creation
+export interface DistributorForSaleOrderDto {
+  id: string;
+  distributorName: string | null;
+  gstNumber: string | null;
+  billingAddress1: string | null;
+  billingAddress2: string | null;
+  billingAddress3: string | null;
+  billingAddress4: string | null;
+  billingStateName: string | null;
+  billingPincode: string | null;
+  creditLimit: number;
+  creditDays: number;
+  outstandingBalance: number;
+  availableCredit: number;
+  canPlaceOrder: boolean;
+  dueSince: number;
+  discountTypeId: number | null;
+  discountTypeName: string | null;
+  primarySalespersonId: string | null;
+  primarySalespersonName: string | null;
+  shippingAddresses: DistributorShippingAddressDto[];
+  defaultShippingAddressId: string | null;
 }
 
 // ============ Distributor Shipping Address Types ============
@@ -172,6 +204,44 @@ export interface SaleOrderItemDto {
   remarks: string | null;
 }
 
+export interface OrderItemRequest {
+  id: string;
+  skuId: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxPercent: number;
+}
+
+export interface CreateSaleOrderCommand {
+  distributorId: string;
+  paymentTypeId: string;
+  saveAsDraft?: boolean;
+  acknowledgeLowStock?: boolean;
+  acknowledgePartialAllocation?: boolean;
+  items: OrderItemRequest[];
+}
+
+export interface UpdateSaleOrderCommand {
+  id: string;
+  distributorId: string;
+  deliveryLocationId: string;
+  paymentType: string; // "Credit" or "Advance"
+  items: OrderItemRequest[];
+}
+
+export interface ApproveRequest {
+  notes: string | null;
+}
+
+export interface RejectRequest {
+  reason: string | null;
+}
+
+export interface CancelRequest {
+  reason: string | null;
+}
+
 // Distributor approval requests
 export interface DistributorApproveRequest {
   distributorId: string;
@@ -194,6 +264,17 @@ export interface SearchSaleOrdersQuery {
   toDate?: string | null;
 }
 
+// Track-based search query
+export type SaleOrderTrackType = "draft" | "pending" | "history";
+
+export interface TrackSaleOrdersQuery {
+  track: SaleOrderTrackType;
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string | null;
+  orderBy?: string | null;
+}
+
 // Search queries for distributor approval stage
 export interface SearchPendingDistributorApprovalQuery {
   pageNumber?: number;
@@ -210,6 +291,40 @@ export interface SearchPendingDistributorApprovalQuery {
   fromExpectedDeliveryDate?: string | null;
   toExpectedDeliveryDate?: string | null;
   retailerName?: string | null;
+}
+
+export interface SearchPendingFinalApprovalQuery {
+  pageNumber?: number;
+  pageSize?: number;
+  distributorId?: string | null;
+  distributorName?: string | null;
+  orderNumber?: string | null;
+  fromOrderDate?: string | null;
+  toOrderDate?: string | null;
+  salespersonId?: string | null;
+  paymentType?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  fromExpectedDeliveryDate?: string | null;
+  toExpectedDeliveryDate?: string | null;
+  retailerName?: string | null;
+  fromDistributorApprovedDate?: string | null;
+  toDistributorApprovedDate?: string | null;
+}
+
+export interface SearchCompletedSaleOrdersQuery {
+  pageNumber?: number;
+  pageSize?: number;
+  keyword?: string | null;
+  statusId?: number | null;
+  distributorId?: string | null;
+  salespersonId?: string | null;
+  fromOrderDate?: string | null;
+  toOrderDate?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  sortBy?: string | null; // "orderdate", "totalamount", "completedon"
+  sortDirection?: string | null; // "asc", "desc"
 }
 
 // Dashboard summary
@@ -383,9 +498,16 @@ export interface CategoryDropdownDto {
   name: string;
 }
 
+export interface PaymentTypeDto {
+  id: string;
+  name: string;
+  code?: string;
+}
+
 // ============ Result Wrappers ============
 
 export type DistributorDtoResult = Result<DistributorDto>;
+export type DistributorForSaleOrderDtoResult = Result<DistributorForSaleOrderDto>;
 export type DistributorDropdownDtoListResult = Result<DistributorDropdownDto[]>;
 
 export type DistributorShippingAddressDtoResult = Result<DistributorShippingAddressDto>;
@@ -408,5 +530,6 @@ export type StateDtoListResult = Result<StateDto[]>;
 export type DistrictDtoListResult = Result<DistrictDto[]>;
 export type BrandDropdownDtoListResult = Result<BrandDropdownDto[]>;
 export type CategoryDropdownDtoListResult = Result<CategoryDropdownDto[]>;
+export type PaymentTypeDtoListResult = Result<PaymentTypeDto[]>;
 
 export type GuidResult = Result<string>;

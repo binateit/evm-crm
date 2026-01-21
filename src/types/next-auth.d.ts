@@ -11,6 +11,7 @@ declare module "next-auth" {
       distributorId: string;
       distributorCode: string;
       distributorName: string;
+      termsAcceptedAt?: string | null;
     };
     accessToken: string;
     refreshToken: string;
@@ -28,6 +29,7 @@ declare module "next-auth" {
     accessToken: string;
     refreshToken: string;
     accessTokenExpiry: string;
+    termsAcceptedAt?: string | null;
   }
 }
 
@@ -43,5 +45,6 @@ declare module "next-auth/jwt" {
     accessToken: string;
     refreshToken: string;
     accessTokenExpiry: string;
+    termsAcceptedAt?: string | null;
   }
 }

@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useDistributor } from "@/hooks/use-distributor";
 import { saleOrderService } from "@/lib/api/services";
-import type { SaleOrderListDto } from "@/types/crm";
+import type { SaleOrderListDto } from "@/types";
 import type { PaginatedResponse } from "@/types/common";
 import { PageHeader, PageBreadcrumb } from "@/components/ui";
 import { AppDataTable, StatusBadge, CurrencyCell, DateCell } from "@/components/ui";
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 
@@ -112,7 +112,16 @@ export default function OrdersPage() {
   return (
     <div className="space-y-4">
       <PageBreadcrumb items={breadcrumbItems} />
-      <PageHeader title="My Orders" subtitle="View and manage your orders" />
+      <div className="flex items-center justify-between">
+        <PageHeader title="My Orders" subtitle="View and manage your orders" />
+        <Link href="/orders/create">
+          <Button
+            label="Create Order"
+            icon={<Plus className="w-4 h-4 mr-2" />}
+            severity="success"
+          />
+        </Link>
+      </div>
 
       <AppDataTable
         value={orders.data}

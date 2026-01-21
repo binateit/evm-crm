@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDistributor } from "@/hooks/use-distributor";
 import { shippingAddressService, dropdownService } from "@/lib/api/services";
-import type { DistributorShippingAddressDto, StateDto, DistrictDto } from "@/types/crm";
+import type { DistributorShippingAddressDto, StateDto, DistrictDto } from "@/types";
 import { PageHeader, PageBreadcrumb, Card, CardContent } from "@/components/ui";
 import { useToast } from "@/lib/contexts/toast-context";
 import { MapPin, Plus, Edit, Trash2, Star } from "lucide-react";

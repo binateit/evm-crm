@@ -3,14 +3,38 @@ import { ENDPOINTS } from "@/lib/api/endpoints";
 import type {
   PromotionDetailDto,
   PromotionTypeDto,
+  PromotionDto,
   SearchPromotionsQuery,
   PromotionPaginationResponse,
   PromotionDetailDtoResult,
   PromotionPaginationResponseResult,
   PromotionTypeDtoListResult,
-} from "@/types/crm";
+  PromotionDtoListResult,
+} from "@/types";
 
 export const promotionService = {
+  /**
+   * Get promotions for the currently logged-in distributor
+   * Only returns promotions that match the distributor's allocated sub-categories
+   */
+  async getMyPromotions(onlyActive: boolean = true): Promise<PromotionDto[]> {
+    try {
+      const response = await apiClient.get<PromotionDtoListResult>(
+        `${ENDPOINTS.PROMOTION.MY_PROMOTIONS}?onlyActive=${onlyActive}`
+      );
+
+      if (!response.data?.succeeded) {
+        console.error("Failed to fetch my promotions:", response.data?.messages?.[0]);
+        return [];
+      }
+
+      return response.data?.data || [];
+    } catch (error) {
+      console.error("Error fetching my promotions:", error);
+      return [];
+    }
+  },
+
   /**
    * Search promotions with pagination and filters
    */
