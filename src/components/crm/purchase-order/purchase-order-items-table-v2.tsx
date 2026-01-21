@@ -470,6 +470,8 @@ export function PurchaseOrderItemsTableV2({
               </tr>
             ) : (
               items.map((item, index) => {
+                const isLocked = item.isLocked || false;
+
                 // Create a minimal AllocatedSkuDto from item data for AsyncSelect compatibility
                 const skuData: AllocatedSkuDto = {
                   id: item.skuId,
@@ -485,46 +487,88 @@ export function PurchaseOrderItemsTableV2({
                 } as AllocatedSkuDto;
 
                 return (
-                  <tr key={item.rowId} className="hover:bg-gray-50">
+                  <tr
+                    key={item.rowId}
+                    className={`hover:bg-gray-50 ${isLocked ? "bg-emerald-50/40" : ""}`}
+                  >
                     {isColumnVisible("partCode") && (
-                      <td className="sticky left-0 z-10 bg-white py-2 px-2 border-r border-gray-200">
-                        <AsyncSelect<SKUOption>
-                          instanceId={`sku-select-${index}`}
-                          value={
-                            item.skuId
-                              ? {
-                                  value: item.skuId,
-                                  label: `${item.skuCode || ""} - ${item.skuName || ""}`,
-                                  data: skuData,
-                                }
-                              : null
-                          }
-                          loadOptions={loadSkuOptions}
-                          onChange={(option) => handleSkuSelect(index, option)}
-                          isClearable
-                          placeholder="Search by code/name..."
-                          className="min-w-[200px]"
-                          menuPortalTarget={document.body}
-                          formatOptionLabel={({ data }) => (
-                            <div className="py-1">
-                              <div className="font-semibold text-gray-800">{data.skuName}</div>
-                              <div className="text-xs text-gray-500">
-                                {data.skuCode} • {formatCurrency(data.sellingPrice || 0)}
+                      <td
+                        className={`sticky left-0 z-10 py-2 px-2 border-r border-gray-200 ${
+                          isLocked ? "bg-emerald-50/40" : "bg-white"
+                        }`}
+                      >
+                        {isLocked ? (
+                          // Locked item - show read-only display with promotion badge
+                          <div className="min-w-[200px] flex items-center gap-2">
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-800">
+                                {item.skuName}
+                                {item.unitPrice === 0.01 && (
+                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                                    FREE
+                                  </span>
+                                )}
                               </div>
+                              <div className="text-xs text-gray-500">
+                                {item.skuCode}
+                                {item.promotionCode && (
+                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                                    <i className="pi pi-gift mr-1 text-[10px]" />
+                                    {item.promotionCode}
+                                  </span>
+                                )}
+                              </div>
+                              {item.claimedFreeQuantity && item.claimedFreeQuantity > 0 && (
+                                <div className="text-xs text-emerald-600 font-semibold mt-1">
+                                  +{item.claimedFreeQuantity} FREE units included below
+                                </div>
+                              )}
                             </div>
-                          )}
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              minHeight: "40px",
-                              borderColor: "#d1d5db",
-                            }),
-                            menuPortal: (base) => ({
-                              ...base,
-                              zIndex: 9999,
-                            }),
-                          }}
-                        />
+                            <i
+                              className="pi pi-lock text-emerald-600"
+                              title="Locked promotion item"
+                            />
+                          </div>
+                        ) : (
+                          // Regular item - show AsyncSelect
+                          <AsyncSelect<SKUOption>
+                            instanceId={`sku-select-${index}`}
+                            value={
+                              item.skuId
+                                ? {
+                                    value: item.skuId,
+                                    label: `${item.skuCode || ""} - ${item.skuName || ""}`,
+                                    data: skuData,
+                                  }
+                                : null
+                            }
+                            loadOptions={loadSkuOptions}
+                            onChange={(option) => handleSkuSelect(index, option)}
+                            isClearable
+                            placeholder="Search by code/name..."
+                            className="min-w-[200px]"
+                            menuPortalTarget={document.body}
+                            formatOptionLabel={({ data }) => (
+                              <div className="py-1">
+                                <div className="font-semibold text-gray-800">{data.skuName}</div>
+                                <div className="text-xs text-gray-500">
+                                  {data.skuCode} • {formatCurrency(data.sellingPrice || 0)}
+                                </div>
+                              </div>
+                            )}
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: "40px",
+                                borderColor: "#d1d5db",
+                              }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
+                            }}
+                          />
+                        )}
                       </td>
                     )}
 
@@ -552,13 +596,20 @@ export function PurchaseOrderItemsTableV2({
 
                     {isColumnVisible("quantity") && (
                       <td className="py-2 px-2">
-                        <InputNumber
-                          value={item.quantity}
-                          onValueChange={(e) => handleQuantityChange(index, e.value)}
-                          min={1}
-                          className="w-24"
-                          inputClassName="text-right"
-                        />
+                        {isLocked ? (
+                          // Locked item - show read-only quantity
+                          <div className="w-24 text-right font-semibold text-gray-900 px-3 py-2">
+                            {item.quantity}
+                          </div>
+                        ) : (
+                          <InputNumber
+                            value={item.quantity}
+                            onValueChange={(e) => handleQuantityChange(index, e.value)}
+                            min={1}
+                            className="w-24"
+                            inputClassName="text-right"
+                          />
+                        )}
                       </td>
                     )}
 
@@ -596,6 +647,8 @@ export function PurchaseOrderItemsTableV2({
                           rounded
                           onClick={() => handleRemoveItem(index)}
                           className="p-2"
+                          disabled={isLocked}
+                          tooltip={isLocked ? "Cannot delete promotion item" : undefined}
                         />
                       </td>
                     )}

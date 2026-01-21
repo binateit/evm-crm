@@ -63,7 +63,7 @@ const navItems: NavItem[] = [
   {
     icon: DollarSign,
     label: "Price List",
-    href: "/pricing",
+    href: "/price-list",
   },
   // {
   //   icon: Target,

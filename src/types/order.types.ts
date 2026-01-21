@@ -43,4 +43,10 @@ export interface OrderItem {
   igstAmount: number; // IGST in currency (0 for intra-state)
   taxAmount: number; // total tax (cgst + sgst + igst)
   totalAmount: number; // final line total
+
+  // Promotion fields (for claimed promotions)
+  isLocked?: boolean; // Prevents editing/deletion when true
+  promotionId?: string | null; // Source promotion ID
+  promotionCode?: string | null; // For display/tracking
+  claimedFreeQuantity?: number | null; // Free units from promotion
 }

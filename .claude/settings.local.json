@@ -12,7 +12,10 @@
       "Bash(npm run dev:*)",
       "Bash(npm run lint:*)",
       "Bash(git rm:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Skill(frontend-design)",
+      "Skill(frontend-design:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

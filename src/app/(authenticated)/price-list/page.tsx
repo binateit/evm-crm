@@ -101,16 +101,34 @@ export default function PricingListPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {items.map((item) => {
               const imageUrl = item.primaryImageUrl ? getImageUrl(item.primaryImageUrl) : "";
+              // Extract just the number from warranty period (e.g., "1 YEAR" -> "1"), default to "1"
+              const warrantyNumber = item.warrantyPeriod?.toString().replace(/[^\d]/g, "") || "1";
 
               return (
                 <div
                   key={item.skuId}
                   className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
                 >
-                  <div className="p-4 flex flex-col">
+                  <div className="p-4 flex flex-col relative">
+                    {/* Warranty Badge - Top Right */}
+                    <div className="absolute top-4 right-4">
+                      <div className="relative w-24 h-10">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/warranty.png"
+                          alt="Warranty"
+                          className="w-full h-full object-contain"
+                        />
+                        {/* Warranty number overlay on blue circle */}
+                        <div className="absolute inset-0 flex items-center justify-start pl-3">
+                          <span className="text-white font-bold text-lg">{warrantyNumber}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Product Name - Top */}
-                    <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3 text-center break-words">
-                      {item.skuName} - warranty
+                    <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3 text-center break-words pr-28">
+                      {item.skuName}
                     </h3>
 
                     {/* Model */}
@@ -119,26 +137,6 @@ export default function PricingListPage() {
                         <span className="font-medium">Model:</span> {item.partCode || "-"}
                       </p>
                     </div>
-
-                    {item.warranty}
-
-                    {/* Warranty Badge */}
-                    {item.warranty && (
-                      <div className="flex justify-center mb-4">
-                        <div className="relative w-24 h-10">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/warranty.png"
-                            alt="Warranty"
-                            className="w-full h-full object-contain"
-                          />
-                          {/* Warranty number overlay on blue circle */}
-                          <div className="absolute inset-0 flex items-center justify-start pl-3">
-                            <span className="text-white font-bold text-lg">{item.warranty}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Image - Centered */}
                     <div className="flex justify-center mb-4">

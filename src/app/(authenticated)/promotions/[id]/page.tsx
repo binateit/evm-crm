@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,8 @@ import { useToast } from "@/lib/contexts/toast-context";
 import { format, differenceInDays, isPast, isFuture } from "date-fns";
 import { promotionService } from "@/lib/api/services";
 import { PromotionSlabDto } from "@/types";
+import { ClaimPromotionDialog } from "@/components/crm/promotion";
+import { validatePromotionClaim } from "@/lib/utils/promotion-helpers";
 
 export default function PromotionDetailPage() {
   const router = useRouter();
@@ -16,6 +19,7 @@ export default function PromotionDetailPage() {
   const toast = useToast();
   const promotionId = params.id as string;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const [showClaimDialog, setShowClaimDialog] = useState(false);
 
   const { data: promotion, isLoading } = useQuery({
     queryKey: ["promotion", promotionId],
@@ -48,6 +52,28 @@ export default function PromotionDetailPage() {
   }
 
   if (!promotion) return null;
+
+  // Validate if promotion can be claimed
+  const claimValidation = validatePromotionClaim(promotion);
+
+  // Handle claim promotion action
+  const handleClaimPromotion = (quantity: number, freeQuantity: number) => {
+    // Encode promotion data as URL parameters
+    const params = new URLSearchParams({
+      claimPromotion: "true",
+      promotionId: promotion.id,
+      promotionCode: promotion.promotionCode || "",
+      skuId: promotion.skuId || "",
+      quantity: quantity.toString(),
+      freeQuantity: freeQuantity.toString(),
+    });
+
+    // Navigate to create PO page
+    router.push(`/purchase-orders/create?${params.toString()}`);
+
+    // Close dialog
+    setShowClaimDialog(false);
+  };
 
   const startDate = new Date(promotion.startDate);
   const endDate = new Date(promotion.endDate);
@@ -131,6 +157,14 @@ export default function PromotionDetailPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3">
+                {claimValidation.canClaim && (
+                  <Button
+                    label="Claim Promotion"
+                    icon="pi pi-gift"
+                    onClick={() => setShowClaimDialog(true)}
+                    className="bg-emerald-500 hover:bg-emerald-600 border-emerald-500"
+                  />
+                )}
                 <Button
                   label="Back to Promotions"
                   icon="pi pi-arrow-left"
@@ -239,6 +273,14 @@ export default function PromotionDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Claim Promotion Dialog */}
+      <ClaimPromotionDialog
+        visible={showClaimDialog}
+        onHide={() => setShowClaimDialog(false)}
+        promotion={promotion}
+        onClaim={handleClaimPromotion}
+      />
     </div>
   );
 }

@@ -6,7 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 
 import { saleOrderSchema, type SaleOrderFormData } from "@/lib/validations/crm";
-import { distributorService, dropdownService } from "@/lib/api/services";
+import { distributorService, dropdownService, skuService } from "@/lib/api/services";
+import { applyCalculations } from "@/lib/utils/order-calculations";
 import type { OrderValidationResult, OrderItem } from "@/types";
 import { PurchaseOrderHeader } from "./purchase-order-header";
 import { PurchaseOrderItemsTableV2 } from "./purchase-order-items-table-v2";
@@ -17,12 +18,25 @@ import { validateOrder } from "@/lib/utils/sale-order-validations";
 import { determineGSTType, type GSTType } from "@/lib/utils/gst-calculator";
 import { useToast } from "@/lib/contexts/toast-context";
 
+export interface PromotionClaimData {
+  promotionId: string;
+  promotionCode: string;
+  skuId: string;
+  quantity: number;
+  freeQuantity: number;
+}
+
 interface PurchaseOrderFormProps {
   onSubmit: (data: SaleOrderFormData, isDraft?: boolean) => Promise<void>;
   isSubmitting?: boolean;
+  initialPromotionClaim?: PromotionClaimData | null;
 }
 
-export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({
+  onSubmit,
+  isSubmitting,
+  initialPromotionClaim,
+}: PurchaseOrderFormProps) {
   const toast = useToast();
 
   // Items state - managed directly instead of through field array
@@ -91,6 +105,113 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
       }
     }
   }, [selectedDeliveryLocationId, distributorDetails, deliveryLocations]);
+
+  // Initialize with promotion claim item if provided
+  useEffect(() => {
+    if (initialPromotionClaim && initialPromotionClaim.skuId && items.length === 0) {
+      const initializePromotionItem = async () => {
+        try {
+          const skuDetails = await skuService.getSkuDetails(initialPromotionClaim.skuId);
+
+          if (skuDetails) {
+            const unitPrice = skuDetails.sellingPrice || skuDetails.unitPrice || 0;
+            const pdc = skuDetails.pdc || 0;
+            const cdc = skuDetails.cdc || 0;
+            const discountPercent = selectedPaymentTypeName === "Advance" ? cdc : pdc;
+
+            // Create the paid item (locked)
+            const paidItem: OrderItem = {
+              rowId: crypto.randomUUID(),
+              skuId: skuDetails.id,
+              skuName: skuDetails.skuName,
+              skuCode: skuDetails.skuCode,
+              brandName: skuDetails.brandName,
+              categoryName: skuDetails.categoryName,
+              sellingPrice: skuDetails.sellingPrice,
+              availableStock: skuDetails.availableStock || 0,
+              pdc,
+              cdc,
+              hsnCode: skuDetails.hsnCode || null,
+              etd: null,
+              quantity: initialPromotionClaim.quantity,
+              unitPrice,
+              discountPercent,
+              taxPercent: 18,
+              cgstPercent: gstType === "INTRA" ? 9 : 0,
+              sgstPercent: gstType === "INTRA" ? 9 : 0,
+              igstPercent: gstType === "INTER" ? 18 : 0,
+              subTotal: 0,
+              discountAmount: 0,
+              taxableAmount: 0,
+              cgstAmount: 0,
+              sgstAmount: 0,
+              igstAmount: 0,
+              taxAmount: 0,
+              totalAmount: 0,
+              // Promotion fields - lock this item
+              isLocked: true,
+              promotionId: initialPromotionClaim.promotionId,
+              promotionCode: initialPromotionClaim.promotionCode,
+              claimedFreeQuantity: initialPromotionClaim.freeQuantity,
+            };
+
+            const calculatedPaidItem = applyCalculations(paidItem);
+
+            // Create the free item (also locked) with price 0.01
+            const freeItem: OrderItem = {
+              rowId: crypto.randomUUID(),
+              skuId: skuDetails.id,
+              skuName: skuDetails.skuName,
+              skuCode: skuDetails.skuCode,
+              brandName: skuDetails.brandName,
+              categoryName: skuDetails.categoryName,
+              sellingPrice: skuDetails.sellingPrice,
+              availableStock: skuDetails.availableStock || 0,
+              pdc,
+              cdc,
+              hsnCode: skuDetails.hsnCode || null,
+              etd: null,
+              quantity: initialPromotionClaim.freeQuantity,
+              unitPrice: 0.01, // Free items priced at 0.01
+              discountPercent: 0, // No discount on free items
+              taxPercent: 18,
+              cgstPercent: gstType === "INTRA" ? 9 : 0,
+              sgstPercent: gstType === "INTRA" ? 9 : 0,
+              igstPercent: gstType === "INTER" ? 18 : 0,
+              subTotal: 0,
+              discountAmount: 0,
+              taxableAmount: 0,
+              cgstAmount: 0,
+              sgstAmount: 0,
+              igstAmount: 0,
+              taxAmount: 0,
+              totalAmount: 0,
+              // Promotion fields - lock this item too
+              isLocked: true,
+              promotionId: initialPromotionClaim.promotionId,
+              promotionCode: initialPromotionClaim.promotionCode,
+              claimedFreeQuantity: 0, // This IS the free item
+            };
+
+            const calculatedFreeItem = applyCalculations(freeItem);
+
+            // Add both items to the order
+            setItems([calculatedPaidItem, calculatedFreeItem]);
+
+            toast.showSuccess(
+              `Promotion "${initialPromotionClaim.promotionCode}" applied! Added ${initialPromotionClaim.quantity} paid units and ${initialPromotionClaim.freeQuantity} free units.`
+            );
+          }
+        } catch (error) {
+          console.error("Error initializing promotion item:", error);
+          toast.showError("Failed to load promotion product details");
+        }
+      };
+
+      initializePromotionItem();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPromotionClaim]);
 
   // Handle stock confirmation
   const handleProceedWithAvailableStock = () => {

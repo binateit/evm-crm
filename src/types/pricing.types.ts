@@ -32,6 +32,7 @@ export interface DistributorPricingDto {
   modelNumber: string | null;
   variant: string | null;
   colorName: string | null;
+  warrantyPeriod: string | null;
 
   // Pricing
   mrp: number | null;

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { PageBreadcrumb, PageHeader } from "@/components/ui";
 import { PurchaseOrderForm } from "@/components/crm/purchase-order";
@@ -18,9 +18,24 @@ const breadcrumbItems = [
 
 export default function CreatePurchaseOrderPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { distributorId, isLoading: authLoading } = useDistributor();
   const { showSuccess, showError } = useToast();
   const [submitting, setSubmitting] = useState(false);
+
+  // Extract promotion claim data from URL params
+  const initialPromotionClaim = useMemo(() => {
+    if (searchParams.get("claimPromotion") === "true") {
+      return {
+        promotionId: searchParams.get("promotionId") || "",
+        promotionCode: searchParams.get("promotionCode") || "",
+        skuId: searchParams.get("skuId") || "",
+        quantity: parseInt(searchParams.get("quantity") || "1", 10),
+        freeQuantity: parseInt(searchParams.get("freeQuantity") || "0", 10),
+      };
+    }
+    return null;
+  }, [searchParams]);
 
   const handleSubmit = async (data: SaleOrderFormData, isDraft: boolean = false) => {
     if (!distributorId) {
@@ -94,7 +109,11 @@ export default function CreatePurchaseOrderPage() {
         title="Create Purchase Order"
         description="Create a new purchase order for products"
       />
-      <PurchaseOrderForm onSubmit={handleSubmit} isSubmitting={submitting} />
+      <PurchaseOrderForm
+        onSubmit={handleSubmit}
+        isSubmitting={submitting}
+        initialPromotionClaim={initialPromotionClaim}
+      />
     </div>
   );
 }
