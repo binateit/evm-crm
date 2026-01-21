@@ -6,7 +6,7 @@ import { InputNumber } from "primereact/inputnumber";
 import AsyncSelect from "react-select/async";
 
 import { skuService, type AllocatedSkuDto } from "@/lib/api/services";
-import { formatCurrency, formatNumber } from "@/lib/utils/formatters";
+import { formatCurrency } from "@/lib/utils/formatters";
 import type { GSTType } from "@/lib/utils/gst-calculator";
 import type { OrderItem } from "@/types";
 import { applyCalculations } from "@/lib/utils/order-calculations";
@@ -30,7 +30,7 @@ interface ColumnConfig {
 const AVAILABLE_COLUMNS: ColumnConfig[] = [
   { key: "partCode", label: "Part Code", required: true, width: "min-w-[200px]" },
   { key: "productName", label: "Product Name", required: false, width: "min-w-[250px]" },
-  { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
+  // { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
   { key: "quantity", label: "Quantity", required: true, width: "min-w-[120px]" },
   { key: "rate", label: "Rate (per unit)", required: true, width: "min-w-[120px]" },
   { key: "discount", label: "Discount %", required: true, width: "min-w-[120px]" },
@@ -430,16 +430,16 @@ export function PurchaseOrderItemsTableV2({
                   Product Name
                 </th>
               )}
-              {isColumnVisible("stock") && (
+              {/* {isColumnVisible("stock") && (
                 <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Stock</th>
-              )}
+              )} */}
               {isColumnVisible("quantity") && (
                 <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">
                   Quantity *
                 </th>
               )}
               {isColumnVisible("rate") && (
-                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Rate *</th>
+                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Rate </th>
               )}
               {isColumnVisible("discount") && (
                 <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">
@@ -451,7 +451,7 @@ export function PurchaseOrderItemsTableV2({
               )}
               {isColumnVisible("totalAmount") && (
                 <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">
-                  Total Amount *
+                  Total Amount
                 </th>
               )}
               {isColumnVisible("actions") && (
@@ -532,7 +532,7 @@ export function PurchaseOrderItemsTableV2({
                       <td className="py-2 px-3 text-sm text-gray-700">{item.skuName || "-"}</td>
                     )}
 
-                    {isColumnVisible("stock") && (
+                    {/* {isColumnVisible("stock") && (
                       <td className="py-2 px-3 text-sm text-right">
                         <span
                           className={`font-medium ${
@@ -548,7 +548,7 @@ export function PurchaseOrderItemsTableV2({
                             : "-"}
                         </span>
                       </td>
-                    )}
+                    )} */}
 
                     {isColumnVisible("quantity") && (
                       <td className="py-2 px-2">
