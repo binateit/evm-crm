@@ -13,6 +13,7 @@ import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { Skeleton } from "primereact/skeleton";
 
 export default function PricingListPage() {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const [products, setProducts] = useState<DistributorPricingDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -69,6 +70,12 @@ export default function PricingListPage() {
     { value: "asc", label: "Low to High" },
     { value: "desc", label: "High to Low" },
   ];
+
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http")) return imageUrl;
+    return imageUrl.startsWith("/") ? `${baseUrl}${imageUrl}` : `${baseUrl}/${imageUrl}`;
+  };
 
   return (
     <div className="space-y-4">
@@ -158,19 +165,13 @@ export default function PricingListPage() {
                   <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
                     {product.primaryImageUrl ? (
                       <img
-                        src={product.primaryImageUrl}
+                        src={getImageUrl(product.primaryImageUrl)}
                         alt={product.skuName}
                         className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
                         <Package className="w-16 h-16 text-gray-300" />
-                      </div>
-                    )}
-                    {product.discountPercentage && product.discountPercentage > 0 && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-sm font-semibold flex items-center gap-1">
-                        <Percent className="w-3 h-3" />
-                        {product.discountPercentage.toFixed(0)}% OFF
                       </div>
                     )}
                   </div>
@@ -200,7 +201,23 @@ export default function PricingListPage() {
 
                     {/* Pricing */}
                     <div className="pt-2 border-t">
-                      {product.mrp &&
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wider mb-1">
+                          MRP
+                        </p>
+                        <p className="text-lg font-bold text-blue-600">
+                          ₹{product.mrp?.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wider mb-1">
+                          DP
+                        </p>
+                        <p className="text-lg font-bold text-green-600">
+                          ₹{product.sellingPrice?.toFixed(2)}
+                        </p>
+                      </div>
+                      {/* {product.mrp &&
                       product.sellingPrice &&
                       product.mrp !== product.sellingPrice ? (
                         <div className="space-y-1">
@@ -222,7 +239,7 @@ export default function PricingListPage() {
                         <div className="text-2xl font-bold text-gray-900">
                           {formatCurrency(product.sellingPrice || product.mrp || 0)}
                         </div>
-                      )}
+                      )} */}
                     </div>
 
                     {/* Additional Info */}
