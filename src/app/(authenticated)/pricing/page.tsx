@@ -110,7 +110,7 @@ export default function PricingListPage() {
                   <div className="p-4 flex flex-col">
                     {/* Product Name - Top */}
                     <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3 text-center break-words">
-                      {item.skuName} - warranty
+                      {item.skuName}
                     </h3>
 
                     {/* Model */}
@@ -119,26 +119,6 @@ export default function PricingListPage() {
                         <span className="font-medium">Model:</span> {item.partCode || "-"}
                       </p>
                     </div>
-
-                    {item.warranty}
-
-                    {/* Warranty Badge */}
-                    {item.warranty && (
-                      <div className="flex justify-center mb-4">
-                        <div className="relative w-24 h-10">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/warranty.png"
-                            alt="Warranty"
-                            className="w-full h-full object-contain"
-                          />
-                          {/* Warranty number overlay on blue circle */}
-                          <div className="absolute inset-0 flex items-center justify-start pl-3">
-                            <span className="text-white font-bold text-lg">{item.warranty}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Image - Centered */}
                     <div className="flex justify-center mb-4">
