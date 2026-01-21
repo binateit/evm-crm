@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
-  User,
   X,
   ChevronDown,
   ChevronRight,
@@ -67,64 +66,64 @@ const navItems: NavItem[] = [
     label: "Purchase Order History",
     href: "/purchase-orders/history",
   },
-  {
-    icon: Receipt,
-    label: "My Invoices",
-    href: "/invoices",
-  },
-  {
-    icon: CreditCard,
-    label: "Ledger & Outstanding",
-    href: "/ledger",
-  },
+  // {
+  //   icon: Receipt,
+  //   label: "My Invoices",
+  //   href: "/invoices",
+  // },
+  // {
+  //   icon: CreditCard,
+  //   label: "Ledger & Outstanding",
+  //   href: "/ledger",
+  // },
   {
     icon: DollarSign,
     label: "Price List",
     href: "/pricing",
   },
-  {
-    icon: Target,
-    label: "Target & Incentives",
-    href: "/targets",
-    children: [{ label: "View Targets", href: "/targets", icon: Target }],
-  },
-  {
-    icon: Package,
-    label: "Add / Update My Stock",
-    href: "/stock/update",
-  },
-  {
-    icon: BarChart3,
-    label: "My Stock Levels",
-    href: "/stock/levels",
-  },
+  // {
+  //   icon: Target,
+  //   label: "Target & Incentives",
+  //   href: "/targets",
+  //   children: [{ label: "View Targets", href: "/targets", icon: Target }],
+  // },
+  // {
+  //   icon: Package,
+  //   label: "Add / Update My Stock",
+  //   href: "/stock/update",
+  // },
+  // {
+  //   icon: BarChart3,
+  //   label: "My Stock Levels",
+  //   href: "/stock/levels",
+  // },
   {
     icon: Gift,
     label: "Promotions & Offers",
     href: "/promotions",
     children: [{ label: "View all promotions", href: "/promotions", icon: Gift }],
   },
-  {
-    icon: Newspaper,
-    label: "News & Engagements",
-    href: "/news",
-    children: [{ label: "View all News", href: "/news", icon: Newspaper }],
-  },
-  {
-    icon: HeadphonesIcon,
-    label: "Support & Feedbacks",
-    href: "/support",
-  },
-  {
-    icon: User,
-    label: "Profile",
-    href: "/profile",
-  },
-  {
-    icon: Users,
-    label: "My Contacts",
-    href: "/contacts",
-  },
+  // {
+  //   icon: Newspaper,
+  //   label: "News & Engagements",
+  //   href: "/news",
+  //   children: [{ label: "View all News", href: "/news", icon: Newspaper }],
+  // },
+  // {
+  //   icon: HeadphonesIcon,
+  //   label: "Support & Feedbacks",
+  //   href: "/support",
+  // },
+  // {
+  //   icon: User,
+  //   label: "Profile",
+  //   href: "/profile",
+  // },
+  // {
+  //   icon: Users,
+  //   label: "My Contacts",
+  //   href: "/contacts",
+  // },
 ];
 
 interface AppSidebarProps {
