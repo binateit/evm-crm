@@ -9,7 +9,7 @@ import { PageBreadcrumb } from "@/components/ui";
 import { useToast } from "@/lib/contexts/toast-context";
 import { format, differenceInDays, isPast, isFuture } from "date-fns";
 import { promotionService } from "@/lib/api/services";
-import { PromotionSlabDto } from "@/types";
+import { PromotionSlabDto, PromotionRequirementDto } from "@/types";
 import { ClaimPromotionDialog } from "@/components/crm/promotion";
 import { validatePromotionClaim } from "@/lib/utils/promotion-helpers";
 
@@ -57,16 +57,28 @@ export default function PromotionDetailPage() {
   const claimValidation = validatePromotionClaim(promotion);
 
   // Handle claim promotion action
-  const handleClaimPromotion = (quantity: number, freeQuantity: number) => {
-    // Encode promotion data as URL parameters
+  const handleClaimPromotion = (
+    quantity: number,
+    freeQuantity: number,
+    requirements?: PromotionRequirementDto[]
+  ) => {
     const params = new URLSearchParams({
       claimPromotion: "true",
       promotionId: promotion.id,
       promotionCode: promotion.promotionCode || "",
-      skuId: promotion.skuId || "",
-      quantity: quantity.toString(),
-      freeQuantity: freeQuantity.toString(),
+      promotionType: promotion.promotionTypeName || "",
     });
+
+    // For Combo Offers, encode requirements as JSON
+    if (requirements && requirements.length > 0) {
+      params.set("isComboOffer", "true");
+      params.set("requirements", JSON.stringify(requirements));
+    } else {
+      // For slab-based promotions
+      params.set("skuId", promotion.skuId || "");
+      params.set("quantity", quantity.toString());
+      params.set("freeQuantity", freeQuantity.toString());
+    }
 
     // Navigate to create PO page
     router.push(`/purchase-orders/create?${params.toString()}`);
@@ -255,6 +267,81 @@ export default function PromotionDetailPage() {
                       ))}
                   </tbody>
                 </table>
+              </div>
+            </InfoSection>
+          )}
+
+          {/* Requirements Table - for Combo Offers */}
+          {promotion.requirements && promotion.requirements.length > 0 && (
+            <InfoSection
+              title="Combo Offer Requirements"
+              icon="pi-shopping-cart"
+              badge={`${promotion.requirements.length} items`}
+            >
+              <div className="space-y-4">
+                {/* Purchase Requirements */}
+                {promotion.requirements.filter((r) => r.requirementTypeName === "Purchase").length >
+                  0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                      <i className="pi pi-shopping-bag text-blue-600" />
+                      Items to Purchase
+                    </h4>
+                    <div className="space-y-2">
+                      {promotion.requirements
+                        .filter((r) => r.requirementTypeName === "Purchase")
+                        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                        .map((req) => (
+                          <div
+                            key={req.id}
+                            className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between"
+                          >
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-900">{req.skuName}</p>
+                              <p className="text-xs text-slate-500 font-mono">{req.skuCode}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-600 text-white">
+                                Qty: {req.requiredQuantity}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Benefit Requirements */}
+                {promotion.requirements.filter((r) => r.requirementTypeName === "Benefit").length >
+                  0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                      <i className="pi pi-gift text-emerald-600" />
+                      Free Items You Get
+                    </h4>
+                    <div className="space-y-2">
+                      {promotion.requirements
+                        .filter((r) => r.requirementTypeName === "Benefit")
+                        .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                        .map((req) => (
+                          <div
+                            key={req.id}
+                            className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between"
+                          >
+                            <div className="flex-1">
+                              <p className="font-semibold text-slate-900">{req.skuName}</p>
+                              <p className="text-xs text-slate-500 font-mono">{req.skuCode}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-emerald-600 text-white">
+                                +{req.requiredQuantity} FREE
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </InfoSection>
           )}

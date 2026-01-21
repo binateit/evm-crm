@@ -1,13 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 
 import { saleOrderSchema, type SaleOrderFormData } from "@/lib/validations/crm";
-import { distributorService, dropdownService, skuService } from "@/lib/api/services";
+import {
+  distributorService,
+  dropdownService,
+  skuService,
+  promotionService,
+} from "@/lib/api/services";
 import { applyCalculations } from "@/lib/utils/order-calculations";
+import { calculateOptimalSlabAllocation } from "@/lib/utils/promotion-helpers";
+import type { PromotionDetailDto } from "@/types";
 import type { OrderValidationResult, OrderItem } from "@/types";
 import { PurchaseOrderHeader } from "./purchase-order-header";
 import { PurchaseOrderItemsTableV2 } from "./purchase-order-items-table-v2";
@@ -15,7 +22,7 @@ import { PurchaseOrderFooter } from "./purchase-order-footer";
 import { PurchaseOrderValidationDialog } from "./purchase-order-validation-dialog";
 import { StockConfirmationDialog } from "./stock-confirmation-dialog";
 import { validateOrder } from "@/lib/utils/sale-order-validations";
-import { determineGSTType, type GSTType } from "@/lib/utils/gst-calculator";
+import { determineGSTType } from "@/lib/utils/gst-calculator";
 import { useToast } from "@/lib/contexts/toast-context";
 
 export interface PromotionClaimData {
@@ -39,16 +46,13 @@ export function PurchaseOrderForm({
 }: PurchaseOrderFormProps) {
   const toast = useToast();
 
-  // Items state - managed directly instead of through field array
-  const [items, setItems] = useState<OrderItem[]>([]);
-
   // Validation dialogs
   const [showValidationDialog, setShowValidationDialog] = useState(false);
   const [showStockConfirmDialog, setShowStockConfirmDialog] = useState(false);
   const [validationResult, setValidationResult] = useState<OrderValidationResult | null>(null);
 
-  // GST state
-  const [gstType, setGstType] = useState<GSTType>("INTER");
+  // Store promotion details for recalculation
+  const [promotionDetails, setPromotionDetails] = useState<PromotionDetailDto | null>(null);
 
   // Fetch distributor details (includes shipping addresses, billing address, credit info)
   const { data: distributorDetails, isLoading: loadingDistributorDetails } = useQuery({
@@ -64,161 +68,280 @@ export function PurchaseOrderForm({
     staleTime: 30 * 60 * 1000,
   });
 
+  // Fetch promotion and SKU details for promotion claim initialization
+  const {
+    data: promotionClaimData,
+    isLoading: loadingPromotionClaim,
+    error: promotionClaimError,
+  } = useQuery({
+    queryKey: ["promotion-claim-init", initialPromotionClaim?.promotionId],
+    queryFn: async () => {
+      if (!initialPromotionClaim?.promotionId) return null;
+
+      const promotion = await promotionService.getById(initialPromotionClaim.promotionId);
+      if (!promotion) throw new Error("Promotion not found");
+
+      // Determine promotion type by checking slabs vs requirements
+      const isSlabWise = promotion.slabs && promotion.slabs.length > 0;
+      const isCombo = promotion.requirements && promotion.requirements.length > 0;
+
+      if (isSlabWise) {
+        // Slab-wise: fetch single SKU from promotion or claim data
+        const skuId = initialPromotionClaim.skuId || promotion.skuId;
+        if (!skuId) throw new Error("SKU not specified for slab promotion");
+
+        const skuDetails = await skuService.getSkuDetails(skuId);
+        if (!skuDetails) throw new Error("SKU not found");
+
+        // SECURITY: Recalculate free quantity from slabs - never trust URL params
+        const slabResult = calculateOptimalSlabAllocation(
+          promotion.slabs,
+          initialPromotionClaim.quantity
+        );
+
+        return {
+          type: "slab" as const,
+          promotion,
+          skuDetails,
+          quantity: initialPromotionClaim.quantity,
+          freeQuantity: slabResult.totalFreeUnits,
+          promotionCode: initialPromotionClaim.promotionCode,
+        };
+      } else if (isCombo) {
+        // Combo: fetch all SKUs from requirements
+        console.log("Combo promotion requirements:", promotion.requirements);
+        const purchaseReqs = promotion.requirements.filter(
+          (r) => r.requirementTypeName === "Purchase"
+        );
+        const benefitReqs = promotion.requirements.filter(
+          (r) => r.requirementTypeName === "Benefit"
+        );
+        console.log("Purchase requirements:", purchaseReqs);
+        console.log("Benefit requirements:", benefitReqs);
+
+        // Fetch all SKU details in parallel
+        const allSkuIds = [...purchaseReqs, ...benefitReqs]
+          .map((r) => r.skuId)
+          .filter((id): id is string => !!id);
+
+        const skuDetailsMap = new Map<
+          string,
+          Awaited<ReturnType<typeof skuService.getSkuDetails>>
+        >();
+        const skuResults = await Promise.all(allSkuIds.map((id) => skuService.getSkuDetails(id)));
+        allSkuIds.forEach((id, i) => {
+          if (skuResults[i]) skuDetailsMap.set(id, skuResults[i]);
+        });
+
+        return {
+          type: "combo" as const,
+          promotion,
+          purchaseRequirements: purchaseReqs,
+          benefitRequirements: benefitReqs,
+          skuDetailsMap,
+          promotionCode: initialPromotionClaim.promotionCode,
+        };
+      }
+
+      throw new Error("Invalid promotion: no slabs or requirements configured");
+    },
+    enabled: !!initialPromotionClaim?.promotionId,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
   // Get delivery locations from distributor details
   const deliveryLocations = distributorDetails?.shippingAddresses || [];
-  const loadingLocations = loadingDistributorDetails;
 
   // Form setup - only for header fields, items managed separately
   const {
     control,
     watch,
+    handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SaleOrderFormData>({
     resolver: zodResolver(saleOrderSchema),
     defaultValues: {
       deliveryLocationId: "",
-      paymentType: "",
+      paymentTypeId: 0,
       items: [],
     },
   });
 
-  // Watch for changes
-  const selectedPaymentTypeId = watch("paymentType");
+  // Watch for changes - single source of truth from form state
+  const selectedPaymentTypeId = watch("paymentTypeId");
   const selectedDeliveryLocationId = watch("deliveryLocationId");
+  const items = watch("items") || [];
 
-  // Get payment type name from ID for discount logic
-  const selectedPaymentTypeName =
-    paymentTypes.find((pt) => pt.id === selectedPaymentTypeId)?.name || "";
+  // Get selected delivery location
+  const selectedDeliveryLocation = deliveryLocations.find(
+    (addr: { id: string }) => addr.id === selectedDeliveryLocationId
+  );
 
-  // Update GST type when delivery location changes
-  useEffect(() => {
-    if (distributorDetails && selectedDeliveryLocationId) {
-      const selectedAddress = deliveryLocations.find(
-        (addr: { id: string }) => addr.id === selectedDeliveryLocationId
+  // Derive GST type from billing and shipping states
+  const gstType = useMemo(() => {
+    if (!distributorDetails || !selectedDeliveryLocation) return "INTER" as const;
+    const billingState = distributorDetails.billingStateName || null;
+    const shippingState = selectedDeliveryLocation.stateName || null;
+    return determineGSTType(billingState, shippingState);
+  }, [distributorDetails, selectedDeliveryLocation]);
+
+  // Track if promotion items have been initialized (one-time operation)
+  const promotionInitialized = useRef(false);
+
+  // Derive initial items from promotion claim data
+  const promotionInitialItems = useMemo(() => {
+    if (!promotionClaimData) return null;
+
+    // Helper to build an order item
+    const buildOrderItem = (
+      skuDetails: NonNullable<Awaited<ReturnType<typeof skuService.getSkuDetails>>>,
+      quantity: number,
+      isFree: boolean,
+      promotionId: string,
+      promotionCode: string,
+      claimedFreeQty: number
+    ): OrderItem => {
+      const unitPrice = isFree ? 0.01 : skuDetails.sellingPrice || skuDetails.unitPrice || 0;
+      const pdc = skuDetails.pdc || 0;
+      const cdc = skuDetails.cdc || 0;
+      const discountPercent = isFree ? 0 : selectedPaymentTypeId === 2 ? cdc : pdc; // 2 = Advance
+
+      return {
+        rowId: crypto.randomUUID(),
+        skuId: skuDetails.id,
+        skuName: skuDetails.skuName,
+        skuCode: skuDetails.skuCode,
+        brandName: skuDetails.brandName,
+        categoryName: skuDetails.categoryName,
+        sellingPrice: skuDetails.sellingPrice,
+        availableStock: skuDetails.availableStock || 0,
+        pdc,
+        cdc,
+        hsnCode: skuDetails.hsnCode || null,
+        etd: null,
+        quantity,
+        unitPrice,
+        discountPercent,
+        taxPercent: 18,
+        cgstPercent: gstType === "INTRA" ? 9 : 0,
+        sgstPercent: gstType === "INTRA" ? 9 : 0,
+        igstPercent: gstType === "INTER" ? 18 : 0,
+        subTotal: 0,
+        discountAmount: 0,
+        taxableAmount: 0,
+        cgstAmount: 0,
+        sgstAmount: 0,
+        igstAmount: 0,
+        taxAmount: 0,
+        totalAmount: 0,
+        isLocked: true,
+        promotionId,
+        promotionCode,
+        claimedFreeQuantity: claimedFreeQty,
+        isOfferItem: isFree,
+      };
+    };
+
+    if (promotionClaimData.type === "slab") {
+      const { promotion, skuDetails, quantity, freeQuantity, promotionCode } = promotionClaimData;
+
+      // Build paid item + free item
+      const paidItem = buildOrderItem(
+        skuDetails,
+        quantity,
+        false,
+        promotion.id,
+        promotionCode,
+        freeQuantity
+      );
+      const freeItem = buildOrderItem(
+        skuDetails,
+        freeQuantity,
+        true,
+        promotion.id,
+        promotionCode,
+        0
       );
 
-      if (selectedAddress) {
-        const billingState = distributorDetails.billingStateName || null;
-        const shippingState = selectedAddress.stateName || null;
-        const newGstType = determineGSTType(billingState, shippingState);
-        setGstType(newGstType);
-      }
+      return [applyCalculations(paidItem), applyCalculations(freeItem)];
     }
-  }, [selectedDeliveryLocationId, distributorDetails, deliveryLocations]);
 
-  // Initialize with promotion claim item if provided
-  useEffect(() => {
-    if (initialPromotionClaim && initialPromotionClaim.skuId && items.length === 0) {
-      const initializePromotionItem = async () => {
-        try {
-          const skuDetails = await skuService.getSkuDetails(initialPromotionClaim.skuId);
+    if (promotionClaimData.type === "combo") {
+      const { promotion, purchaseRequirements, benefitRequirements, skuDetailsMap, promotionCode } =
+        promotionClaimData;
+      const orderItems: OrderItem[] = [];
 
-          if (skuDetails) {
-            const unitPrice = skuDetails.sellingPrice || skuDetails.unitPrice || 0;
-            const pdc = skuDetails.pdc || 0;
-            const cdc = skuDetails.cdc || 0;
-            const discountPercent = selectedPaymentTypeName === "Advance" ? cdc : pdc;
-
-            // Create the paid item (locked)
-            const paidItem: OrderItem = {
-              rowId: crypto.randomUUID(),
-              skuId: skuDetails.id,
-              skuName: skuDetails.skuName,
-              skuCode: skuDetails.skuCode,
-              brandName: skuDetails.brandName,
-              categoryName: skuDetails.categoryName,
-              sellingPrice: skuDetails.sellingPrice,
-              availableStock: skuDetails.availableStock || 0,
-              pdc,
-              cdc,
-              hsnCode: skuDetails.hsnCode || null,
-              etd: null,
-              quantity: initialPromotionClaim.quantity,
-              unitPrice,
-              discountPercent,
-              taxPercent: 18,
-              cgstPercent: gstType === "INTRA" ? 9 : 0,
-              sgstPercent: gstType === "INTRA" ? 9 : 0,
-              igstPercent: gstType === "INTER" ? 18 : 0,
-              subTotal: 0,
-              discountAmount: 0,
-              taxableAmount: 0,
-              cgstAmount: 0,
-              sgstAmount: 0,
-              igstAmount: 0,
-              taxAmount: 0,
-              totalAmount: 0,
-              // Promotion fields - lock this item
-              isLocked: true,
-              promotionId: initialPromotionClaim.promotionId,
-              promotionCode: initialPromotionClaim.promotionCode,
-              claimedFreeQuantity: initialPromotionClaim.freeQuantity,
-            };
-
-            const calculatedPaidItem = applyCalculations(paidItem);
-
-            // Create the free item (also locked) with price 0.01
-            const freeItem: OrderItem = {
-              rowId: crypto.randomUUID(),
-              skuId: skuDetails.id,
-              skuName: skuDetails.skuName,
-              skuCode: skuDetails.skuCode,
-              brandName: skuDetails.brandName,
-              categoryName: skuDetails.categoryName,
-              sellingPrice: skuDetails.sellingPrice,
-              availableStock: skuDetails.availableStock || 0,
-              pdc,
-              cdc,
-              hsnCode: skuDetails.hsnCode || null,
-              etd: null,
-              quantity: initialPromotionClaim.freeQuantity,
-              unitPrice: 0.01, // Free items priced at 0.01
-              discountPercent: 0, // No discount on free items
-              taxPercent: 18,
-              cgstPercent: gstType === "INTRA" ? 9 : 0,
-              sgstPercent: gstType === "INTRA" ? 9 : 0,
-              igstPercent: gstType === "INTER" ? 18 : 0,
-              subTotal: 0,
-              discountAmount: 0,
-              taxableAmount: 0,
-              cgstAmount: 0,
-              sgstAmount: 0,
-              igstAmount: 0,
-              taxAmount: 0,
-              totalAmount: 0,
-              // Promotion fields - lock this item too
-              isLocked: true,
-              promotionId: initialPromotionClaim.promotionId,
-              promotionCode: initialPromotionClaim.promotionCode,
-              claimedFreeQuantity: 0, // This IS the free item
-            };
-
-            const calculatedFreeItem = applyCalculations(freeItem);
-
-            // Add both items to the order
-            setItems([calculatedPaidItem, calculatedFreeItem]);
-
-            toast.showSuccess(
-              `Promotion "${initialPromotionClaim.promotionCode}" applied! Added ${initialPromotionClaim.quantity} paid units and ${initialPromotionClaim.freeQuantity} free units.`
-            );
-          }
-        } catch (error) {
-          console.error("Error initializing promotion item:", error);
-          toast.showError("Failed to load promotion product details");
+      // Add purchase requirement items (paid)
+      for (const req of purchaseRequirements) {
+        const sku = req.skuId ? skuDetailsMap.get(req.skuId) : null;
+        if (sku) {
+          const item = buildOrderItem(
+            sku,
+            req.requiredQuantity || 1,
+            false,
+            promotion.id,
+            promotionCode,
+            0
+          );
+          orderItems.push(applyCalculations(item));
         }
-      };
+      }
 
-      initializePromotionItem();
+      // Add benefit items (free at 0.01)
+      for (const req of benefitRequirements) {
+        const sku = req.skuId ? skuDetailsMap.get(req.skuId) : null;
+        if (sku) {
+          const item = buildOrderItem(
+            sku,
+            req.requiredQuantity || 1,
+            true,
+            promotion.id,
+            promotionCode,
+            0
+          );
+          orderItems.push(applyCalculations(item));
+        }
+      }
+
+      return orderItems;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPromotionClaim]);
+
+    return null;
+  }, [promotionClaimData, selectedPaymentTypeId, gstType]);
+
+  // Initialize items from promotion claim (one-time, replaces useEffect)
+  if (
+    promotionInitialItems &&
+    promotionInitialItems.length > 0 &&
+    !promotionInitialized.current &&
+    items.length === 0
+  ) {
+    promotionInitialized.current = true;
+    setValue("items", promotionInitialItems);
+    if (promotionClaimData?.promotion) {
+      setPromotionDetails(promotionClaimData.promotion);
+    }
+  }
+
+  // Show error toast if promotion claim failed
+  useEffect(() => {
+    if (promotionClaimError) {
+      toast.showError(
+        promotionClaimError instanceof Error
+          ? promotionClaimError.message
+          : "Failed to load promotion details"
+      );
+    }
+  }, [promotionClaimError, toast]);
 
   // Handle stock confirmation
   const handleProceedWithAvailableStock = () => {
     if (!validationResult) return;
 
     // Update items with available stock
-    const updatedItems = items.map((item) => {
+    const itemsWithAdjustedStock = items.map((item) => {
       const stockIssue = validationResult.stockIssues.find((issue) => issue.skuId === item.skuId);
       if (stockIssue) {
         return { ...item, quantity: stockIssue.availableStock };
@@ -226,14 +349,16 @@ export function PurchaseOrderForm({
       return item;
     });
 
-    setItems(updatedItems);
+    // Use handleItemsChange to ensure promotion recalculation if needed
+    // This returns the final items after any promotion adjustments
+    const finalItems = handleItemsChange(itemsWithAdjustedStock);
     setShowStockConfirmDialog(false);
 
-    // Submit with updated items
+    // Submit with the final updated items
     const formData = {
       deliveryLocationId: watch("deliveryLocationId"),
-      paymentType: watch("paymentType"),
-      items: updatedItems,
+      paymentTypeId: watch("paymentTypeId"),
+      items: finalItems,
     };
     handleFormSubmit(formData, false);
   };
@@ -241,6 +366,71 @@ export function PurchaseOrderForm({
   const handleCancelStockConfirmation = () => {
     setShowStockConfirmDialog(false);
     toast.info("Order cancelled. Please adjust quantities manually.");
+  };
+
+  // Custom items change handler to handle promotion recalculation
+  // Returns the final updated items after promotion recalculation
+  const handleItemsChange = (newItems: OrderItem[]): OrderItem[] => {
+    // Check if promotion was removed
+    const hasPromotionItems = newItems.some((item) => item.isLocked && item.promotionId);
+    if (!hasPromotionItems && promotionDetails) {
+      // Clear promotion details if all promotion items were removed
+      setPromotionDetails(null);
+      setValue("items", newItems);
+      return newItems;
+    }
+
+    // Check if any locked promotion item's quantity changed
+    if (promotionDetails && promotionDetails.slabs) {
+      const updatedItems = [...newItems];
+      let hasChanges = false;
+
+      // Find the paid promotion item (has claimedFreeQuantity > 0)
+      const paidItemIndex = updatedItems.findIndex(
+        (item) => item.isLocked && item.promotionId && (item.claimedFreeQuantity ?? 0) > 0
+      );
+
+      if (paidItemIndex !== -1) {
+        const paidItem = updatedItems[paidItemIndex]!;
+        const newQuantity = paidItem.quantity;
+
+        // Recalculate free quantity using greedy algorithm
+        const slabResult = calculateOptimalSlabAllocation(promotionDetails.slabs, newQuantity);
+        const newFreeQuantity = slabResult.totalFreeUnits;
+
+        // Update the claimedFreeQuantity on paid item
+        if (paidItem.claimedFreeQuantity !== newFreeQuantity) {
+          updatedItems[paidItemIndex] = {
+            ...paidItem,
+            claimedFreeQuantity: newFreeQuantity,
+          };
+          hasChanges = true;
+
+          // Find and update the free item (unitPrice === 0.01 with same promotionId)
+          const freeItemIndex = updatedItems.findIndex(
+            (item) =>
+              item.isLocked && item.promotionId === paidItem.promotionId && item.unitPrice === 0.01
+          );
+
+          if (freeItemIndex !== -1) {
+            const freeItem = updatedItems[freeItemIndex]!;
+            updatedItems[freeItemIndex] = applyCalculations({
+              ...freeItem,
+              quantity: newFreeQuantity,
+            });
+          }
+        }
+      }
+
+      if (hasChanges) {
+        setValue("items", updatedItems);
+        return updatedItems;
+      }
+    }
+
+    // No promotion recalculation needed, just update items
+    setValue("items", newItems);
+    return newItems;
   };
 
   // Form submission with validation
@@ -274,13 +464,25 @@ export function PurchaseOrderForm({
         rowIndex: 0, // Not needed anymore but kept for compatibility
       }));
 
-    // Calculate order total for validation
-    const orderTotal = calculateOrderTotal();
-
-    // Validate order
-    const result = validateOrder(distributorDetails, itemsWithSKUs, orderTotal, data.paymentType);
+    // Validate order (paymentTypeId: 1 = Credit, 2 = Advance)
+    const result = validateOrder(
+      distributorDetails,
+      itemsWithSKUs,
+      orderTotal,
+      selectedPaymentTypeId
+    );
 
     setValidationResult(result);
+
+    // Log validation results for debugging
+    if (result.blockingErrors.length > 0 || result.stockIssues.length > 0) {
+      console.error("Order validation issues:", {
+        blockingErrors: result.blockingErrors,
+        stockIssues: result.stockIssues,
+        orderTotal,
+        paymentTypeId: selectedPaymentTypeId,
+      });
+    }
 
     // Show validation errors
     if (result.blockingErrors.length > 0) {
@@ -299,33 +501,63 @@ export function PurchaseOrderForm({
   };
 
   // Calculate order total for validation (net amount only)
-  const calculateOrderTotal = () => {
-    let totalTaxableAmount = 0;
-    let cgstAmount = 0;
-    let sgstAmount = 0;
-    let igstAmount = 0;
+  const orderTotal = useMemo(() => {
+    return items.reduce((total, item) => {
+      return (
+        total +
+        (item.taxableAmount || 0) +
+        (item.cgstAmount || 0) +
+        (item.sgstAmount || 0) +
+        (item.igstAmount || 0)
+      );
+    }, 0);
+  }, [items]);
 
-    items.forEach((item) => {
-      totalTaxableAmount += item.taxableAmount || 0;
-      cgstAmount += item.cgstAmount || 0;
-      sgstAmount += item.sgstAmount || 0;
-      igstAmount += item.igstAmount || 0;
-    });
-
-    return totalTaxableAmount + cgstAmount + sgstAmount + igstAmount;
-  };
-
-  // Handle form submission
+  // Handle form submission with validation
   const handleFormSubmission = (isDraft: boolean = false) => {
-    // Build form data from state
-    const formData: SaleOrderFormData = {
-      deliveryLocationId: watch("deliveryLocationId"),
-      paymentType: watch("paymentType"),
-      items,
-    };
+    if (isDraft) {
+      // Skip validation for drafts
+      const formData: SaleOrderFormData = {
+        deliveryLocationId: watch("deliveryLocationId"),
+        paymentTypeId: watch("paymentTypeId"),
+        items: items,
+      };
+      handleFormSubmit(formData, isDraft);
+      return;
+    }
 
-    handleFormSubmit(formData, isDraft);
+    // For non-drafts, use React Hook Form's handleSubmit for validation
+    handleSubmit(
+      (data) => {
+        console.log("Form validation passed, submitting:", data);
+        const formData: SaleOrderFormData = {
+          ...data,
+          items,
+        };
+        handleFormSubmit(formData, false);
+      },
+      (errors) => {
+        console.error("Form validation errors:", errors);
+        console.error("Current form values:", {
+          deliveryLocationId: watch("deliveryLocationId"),
+          paymentTypeId: watch("paymentTypeId"),
+          items: items,
+        });
+      }
+    )();
   };
+
+  // Show loading state while fetching promotion claim data
+  if (loadingPromotionClaim && initialPromotionClaim) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <i className="pi pi-spin pi-spinner text-2xl text-gray-400" />
+          <p className="text-gray-500 mt-2">Loading promotion details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form
@@ -343,14 +575,14 @@ export function PurchaseOrderForm({
         paymentTypes={paymentTypes}
         loadingPaymentTypes={loadingPaymentTypes}
         deliveryLocations={deliveryLocations}
-        loadingLocations={loadingLocations}
+        loadingLocations={loadingDistributorDetails}
       />
 
       {/* Items Table */}
       <PurchaseOrderItemsTableV2
         items={items}
-        onChange={setItems}
-        paymentTypeName={selectedPaymentTypeName}
+        onChange={handleItemsChange}
+        paymentTypeId={selectedPaymentTypeId}
         gstType={gstType}
         errors={errors.items?.message?.toString()}
       />

@@ -46,7 +46,10 @@ export interface OrderItem {
 
   // Promotion fields (for claimed promotions)
   isLocked?: boolean; // Prevents editing/deletion when true
-  promotionId?: string | null; // Source promotion ID
-  promotionCode?: string | null; // For display/tracking
-  claimedFreeQuantity?: number | null; // Free units from promotion
+  promotionId?: string; // Source promotion ID
+  promotionCode?: string; // For display/tracking
+  claimedFreeQuantity?: number; // Free units from promotion
+  isOfferItem?: boolean; // True for free/benefit items in promotions
+  billWhenStockArrives?: boolean; // Bill when stock arrives flag
+  remarks?: string; // Item remarks
 }

@@ -22,15 +22,15 @@ interface OrderItem {
 }
 
 /**
- * Validate credit limit - only applies to "Credit" payment type
+ * Validate credit limit - only applies to Credit payment type (ID: 1)
  */
 export function validateCreditLimit(
   distributor: DistributorDto | DistributorForSaleOrderDto,
   orderTotal: number,
-  paymentType: string
+  paymentTypeId: number
 ): ValidationResult {
-  // Credit limit only applies to Credit payment type
-  if (paymentType !== "Credit") {
+  // Credit limit only applies to Credit payment type (ID: 1)
+  if (paymentTypeId !== 1) {
     return {
       isValid: true,
       validationType: "credit_limit",
@@ -139,14 +139,14 @@ export function validateOrder(
   distributorDetails: DistributorDto | DistributorForSaleOrderDto,
   items: OrderItem[],
   orderTotal: number,
-  paymentType: string
+  paymentTypeId: number
 ): OrderValidationResult {
   const blockingErrors: ValidationResult[] = [];
   const stockIssues: StockIssue[] = [];
   const warnings: ValidationResult[] = [];
 
   // 1. Validate credit limit (order-level)
-  const creditCheck = validateCreditLimit(distributorDetails, orderTotal, paymentType);
+  const creditCheck = validateCreditLimit(distributorDetails, orderTotal, paymentTypeId);
   if (!creditCheck.isValid) {
     blockingErrors.push(creditCheck);
   }

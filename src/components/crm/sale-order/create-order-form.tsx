@@ -88,7 +88,7 @@ export function CreateOrderForm({
 
       // Auto-select first payment type
       if (types.length > 0 && types[0]) {
-        setSelectedPaymentTypeId(types[0].id);
+        setSelectedPaymentTypeId(String(types[0].id));
       }
     } catch (error) {
       console.error("Error fetching payment types:", error);

@@ -208,14 +208,16 @@ export interface OrderItemRequest {
   id: string;
   skuId: string;
   quantity: number;
-  unitPrice: number;
   discountPercent: number;
-  taxPercent: number;
+  billWhenStockArrives?: boolean;
+  remarks?: string;
+  isOfferItem?: boolean;
 }
 
 export interface CreateSaleOrderCommand {
-  distributorId: string;
-  paymentTypeId: string;
+  paymentTypeId: number;
+  shippingAddressId: string;
+  promotionId?: string;
   saveAsDraft?: boolean;
   acknowledgeLowStock?: boolean;
   acknowledgePartialAllocation?: boolean;
@@ -394,6 +396,8 @@ export interface PromotionSlabDto {
 export interface PromotionRequirementDto {
   id: string;
   requirementType?: string | null;
+  requirementTypeId?: number | null;
+  requirementTypeName?: string | null;
   skuId?: string | null;
   skuCode?: string | null;
   skuName?: string | null;
@@ -485,9 +489,8 @@ export interface CategoryDropdownDto {
 }
 
 export interface PaymentTypeDto {
-  id: string;
+  id: number;
   name: string;
-  code?: string;
 }
 
 // ============ Result Wrappers ============

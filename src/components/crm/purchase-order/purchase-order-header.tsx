@@ -52,27 +52,31 @@ export function PurchaseOrderHeader({
         {/* Row 1 */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Seller:</label>
-          <p className="text-sm text-gray-900 py-2.5">Hundia Infosolutions Pvt Ltd</p>
+          <p className="text-sm text-gray-900 py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+            Hundia Infosolutions Pvt Ltd
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">
             Buyer / Distributor: <span className="text-red-600">*</span>
           </label>
-          <p className="text-sm text-gray-900 py-2.5">
+          <p className="text-sm text-gray-900 py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
             {distributorDetails?.distributorName || "Loading..."}
           </p>
         </div>
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">GSTIN:</label>
-          <p className="text-sm text-gray-900 py-2.5">{distributorDetails?.gstNumber || "N/A"}</p>
+          <p className="text-sm text-gray-900 py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+            {distributorDetails?.gstNumber || "N/A"}
+          </p>
         </div>
 
         {/* Row 2 */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Credit Limit / Used:</label>
-          <p className="text-sm text-gray-900 py-2.5">
+          <p className="text-sm text-gray-900 py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
             {distributorDetails
               ? `${formatCurrency(distributorDetails.creditLimit || 0)} / ${formatCurrency(distributorDetails.outstandingBalance || 0)}`
               : "N/A"}
@@ -84,7 +88,7 @@ export function PurchaseOrderHeader({
             Payment Type: <span className="text-red-600">*</span>
           </label>
           <Controller
-            name="paymentType"
+            name="paymentTypeId"
             control={control}
             render={({ field }) => (
               <Dropdown
@@ -102,14 +106,14 @@ export function PurchaseOrderHeader({
               />
             )}
           />
-          {errors.paymentType && (
-            <small className="text-red-600">{errors.paymentType.message}</small>
+          {errors.paymentTypeId && (
+            <small className="text-red-600">{errors.paymentTypeId.message}</small>
           )}
         </div>
 
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Credit Days / Due since:</label>
-          <p className="text-sm text-gray-900 py-2.5">
+          <p className="text-sm text-gray-900 py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
             {distributorDetails
               ? `${distributorDetails.creditDays || 0} days${distributorDetails.dueSince ? ` / ${distributorDetails.dueSince} days overdue` : ""}`
               : "N/A"}
@@ -119,7 +123,7 @@ export function PurchaseOrderHeader({
         {/* Row 3 - Billing Address and Delivery Location */}
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium text-gray-700">Billing Address:</label>
-          <p className="text-sm text-gray-900 whitespace-pre-line py-2">
+          <p className="text-sm text-gray-900 whitespace-pre-line py-2.5 px-4 border border-gray-200 rounded-lg bg-white shadow-sm">
             {formatBillingAddress(distributorDetails) || "N/A"}
           </p>
         </div>

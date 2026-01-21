@@ -6,7 +6,7 @@ import { InputNumber } from "primereact/inputnumber";
 import AsyncSelect from "react-select/async";
 
 import { skuService, type AllocatedSkuDto } from "@/lib/api/services";
-import { formatCurrency } from "@/lib/utils/formatters";
+import { formatCurrency, formatNumber } from "@/lib/utils/formatters";
 import type { GSTType } from "@/lib/utils/gst-calculator";
 import type { OrderItem } from "@/types";
 import { applyCalculations } from "@/lib/utils/order-calculations";
@@ -31,7 +31,7 @@ const AVAILABLE_COLUMNS: ColumnConfig[] = [
   { key: "partCode", label: "Part Code", required: true, width: "min-w-[200px]" },
   { key: "productName", label: "Product Name", required: false, width: "min-w-[250px]" },
   // { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
-  { key: "quantity", label: "Quantity", required: true, width: "min-w-[120px]" },
+  { key: "quantity", label: "Quantity", required: true, width: "min-w-[140px]" },
   { key: "rate", label: "Rate (per unit)", required: true, width: "min-w-[120px]" },
   { key: "discount", label: "Discount %", required: true, width: "min-w-[120px]" },
   { key: "gst", label: "GST %", required: true, width: "min-w-[100px]" },
@@ -42,7 +42,7 @@ const AVAILABLE_COLUMNS: ColumnConfig[] = [
 interface PurchaseOrderItemsTableProps {
   items: OrderItem[];
   onChange: (items: OrderItem[]) => void;
-  paymentTypeName: string; // Payment type name (for discount logic)
+  paymentTypeId: number; // Payment type ID (1 = Credit, 2 = Advance)
   gstType: GSTType;
   errors?: string;
 }
@@ -50,7 +50,7 @@ interface PurchaseOrderItemsTableProps {
 export function PurchaseOrderItemsTableV2({
   items,
   onChange,
-  paymentTypeName,
+  paymentTypeId,
   gstType,
   errors,
 }: PurchaseOrderItemsTableProps) {
@@ -81,14 +81,14 @@ export function PurchaseOrderItemsTableV2({
   // Update discounts when payment type changes
   useEffect(() => {
     // Skip if no payment type selected or no items
-    if (!paymentTypeName || items.length === 0) return;
+    if (!paymentTypeId || items.length === 0) return;
 
     const updatedItems = items.map((item) => {
       // Use pdc/cdc from OrderItem (already stored when SKU was selected)
       if (item.skuId) {
         const pdc = item.pdc || 0;
         const cdc = item.cdc || 0;
-        const newDiscount = paymentTypeName === "Advance" ? cdc : pdc;
+        const newDiscount = paymentTypeId === 2 ? cdc : pdc; // 2 = Advance
         // Recalculate all fields with new discount
         return applyCalculations({ ...item, discountPercent: newDiscount });
       }
@@ -104,7 +104,7 @@ export function PurchaseOrderItemsTableV2({
       onChange(updatedItems);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentTypeName]);
+  }, [paymentTypeId]);
 
   // Update GST percentages when gstType changes
   useEffect(() => {
@@ -210,6 +210,12 @@ export function PurchaseOrderItemsTableV2({
     onChange(newItems);
   };
 
+  const handleRemovePromotion = (promotionId: string) => {
+    // Remove all items with this promotionId (both paid and free items)
+    const newItems = items.filter((item) => item.promotionId !== promotionId);
+    onChange(newItems);
+  };
+
   const handleSkuSelect = async (index: number, skuOption: SKUOption | null) => {
     if (!skuOption) {
       // Clear SKU - reset to empty item
@@ -251,7 +257,7 @@ export function PurchaseOrderItemsTableV2({
         const unitPrice = skuDetails.sellingPrice || skuDetails.unitPrice || 0;
         const pdc = skuDetails.pdc || 0;
         const cdc = skuDetails.cdc || 0;
-        const discountPercent = paymentTypeName === "Advance" ? cdc : pdc;
+        const discountPercent = paymentTypeId === 2 ? cdc : pdc; // 2 = Advance
 
         // Update items array with full SKU details
         const newItems = [...items];
@@ -499,7 +505,7 @@ export function PurchaseOrderItemsTableV2({
                       >
                         {isLocked ? (
                           // Locked item - show read-only display with promotion badge
-                          <div className="min-w-[200px] flex items-center gap-2">
+                          <div className="min-w-[150px] flex items-center gap-2">
                             <div className="flex-1">
                               <div className="font-semibold text-gray-800">
                                 {item.skuName}
@@ -509,25 +515,18 @@ export function PurchaseOrderItemsTableV2({
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {item.skuCode}
-                                {item.promotionCode && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                    <i className="pi pi-gift mr-1 text-[10px]" />
-                                    {item.promotionCode}
-                                  </span>
-                                )}
-                              </div>
-                              {item.claimedFreeQuantity && item.claimedFreeQuantity > 0 && (
+                              <div className="text-xs text-gray-500">{item.skuCode}</div>
+
+                              {item.unitPrice !== 0.01 && (
                                 <div className="text-xs text-emerald-600 font-semibold mt-1">
                                   +{item.claimedFreeQuantity} FREE units included below
                                 </div>
                               )}
                             </div>
-                            <i
+                            {/* <i
                               className="pi pi-lock text-emerald-600"
                               title="Locked promotion item"
-                            />
+                            /> */}
                           </div>
                         ) : (
                           // Regular item - show AsyncSelect
@@ -595,19 +594,21 @@ export function PurchaseOrderItemsTableV2({
                     )} */}
 
                     {isColumnVisible("quantity") && (
-                      <td className="py-2 px-2">
+                      <td className="py-2 px-3">
                         {isLocked ? (
-                          // Locked item - show read-only quantity
-                          <div className="w-24 text-right font-semibold text-gray-900 px-3 py-2">
-                            {item.quantity}
+                          // Locked item - show read-only quantity with formatting
+                          <div className="min-w-[100px] text-right font-semibold text-gray-900 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
+                            {formatNumber(item.quantity)}
                           </div>
                         ) : (
                           <InputNumber
                             value={item.quantity}
                             onValueChange={(e) => handleQuantityChange(index, e.value)}
                             min={1}
-                            className="w-24"
-                            inputClassName="text-right"
+                            className="w-full"
+                            inputClassName="text-right font-semibold"
+                            locale="en-IN"
+                            useGrouping={true}
                           />
                         )}
                       </td>
@@ -639,17 +640,30 @@ export function PurchaseOrderItemsTableV2({
 
                     {isColumnVisible("actions") && (
                       <td className="py-2 px-3 text-center">
-                        <Button
-                          type="button"
-                          icon="pi pi-trash"
-                          severity="danger"
-                          text
-                          rounded
-                          onClick={() => handleRemoveItem(index)}
-                          className="p-2"
-                          disabled={isLocked}
-                          tooltip={isLocked ? "Cannot delete promotion item" : undefined}
-                        />
+                        {isLocked && item.promotionId ? (
+                          // Promotion item - show "Remove Promotion" button
+                          <Button
+                            type="button"
+                            icon="pi pi-times"
+                            severity="warning"
+                            text
+                            rounded
+                            onClick={() => handleRemovePromotion(item.promotionId!)}
+                            className="p-2"
+                            tooltip="Remove promotion and all related items"
+                          />
+                        ) : (
+                          // Regular item - show delete button
+                          <Button
+                            type="button"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            text
+                            rounded
+                            onClick={() => handleRemoveItem(index)}
+                            className="p-2"
+                          />
+                        )}
                       </td>
                     )}
                   </tr>

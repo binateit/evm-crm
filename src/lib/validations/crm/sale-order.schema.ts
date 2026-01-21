@@ -41,11 +41,20 @@ export const saleOrderItemSchema = z.object({
   igstAmount: z.number(),
   taxAmount: z.number(),
   totalAmount: z.number(),
+
+  // Promotion fields
+  isLocked: z.boolean().optional(),
+  promotionId: z.string().optional(),
+  promotionCode: z.string().optional(),
+  claimedFreeQuantity: z.number().optional(),
+  isOfferItem: z.boolean().optional(),
+  billWhenStockArrives: z.boolean().optional(),
+  remarks: z.string().optional(),
 });
 
 export const saleOrderSchema = z.object({
   deliveryLocationId: z.string().min(1, "Delivery location is required"),
-  paymentType: z.string().min(1, "Payment type is required"),
+  paymentTypeId: z.number().min(1, "Payment type is required"),
   items: z.array(saleOrderItemSchema).min(1, "At least one item is required"),
 });
 

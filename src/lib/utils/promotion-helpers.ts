@@ -117,7 +117,8 @@ export interface PromotionValidationResult {
 
 /**
  * Validates if a promotion can be claimed by a distributor.
- * Checks various conditions like active status, dates, SKU availability, and slabs.
+ * Checks various conditions like active status, dates, SKU/requirements availability.
+ * Supports both slab-based promotions and Combo Offers.
  */
 export function validatePromotionClaim(
   promotion: PromotionDetailDto | null | undefined
@@ -143,12 +144,19 @@ export function validatePromotionClaim(
     return { canClaim: false, reason: "This promotion hasn't started yet" };
   }
 
-  // Check if SKU exists
+  // For Combo Offers, check if requirements exist
+  if (promotion.promotionTypeName === "Combo Offer") {
+    if (!promotion.requirements || promotion.requirements.length === 0) {
+      return { canClaim: false, reason: "No requirements configured for this combo offer" };
+    }
+    return { canClaim: true };
+  }
+
+  // For slab-based promotions, check if SKU and slabs exist
   if (!promotion.skuId) {
     return { canClaim: false, reason: "No product is associated with this promotion" };
   }
 
-  // Check if slabs exist (for free units promotions)
   if (!promotion.slabs || promotion.slabs.length === 0) {
     return { canClaim: false, reason: "No quantity slabs configured for this promotion" };
   }
