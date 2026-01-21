@@ -12,8 +12,6 @@ import { useToast } from "@/lib/contexts/toast-context";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
 import { Column } from "primereact/column";
-import { InputText } from "primereact/inputtext";
-import { Calendar } from "primereact/calendar";
 import type { SaleOrderListDto } from "@/types";
 
 export default function HistoryPurchaseOrdersPage() {
@@ -22,8 +20,6 @@ export default function HistoryPurchaseOrdersPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [keyword, setKeyword] = useState("");
-  const [fromDate, setFromDate] = useState<Date | null>(null);
-  const [toDate, setToDate] = useState<Date | null>(null);
 
   // Fetch history orders
   const {
@@ -31,26 +27,17 @@ export default function HistoryPurchaseOrdersPage() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["history-orders", pageNumber, pageSize, keyword, fromDate, toDate],
+    queryKey: ["history-orders", pageNumber, pageSize, keyword],
     queryFn: () =>
       saleOrderService.getMyOrdersByTrack("history", {
         pageNumber,
         pageSize,
         keyword: keyword || undefined,
-        fromOrderDate: fromDate ? fromDate.toISOString() : undefined,
-        toOrderDate: toDate ? toDate.toISOString() : undefined,
       }),
   });
 
   const handleViewOrder = (orderId: string) => {
     router.push(`/purchase-orders/${orderId}`);
-  };
-
-  const handleClearFilters = () => {
-    setKeyword("");
-    setFromDate(null);
-    setToDate(null);
-    setPageNumber(1);
   };
 
   // Table column templates
@@ -97,12 +84,7 @@ export default function HistoryPurchaseOrdersPage() {
     toast?.showError("Failed to load purchase order history");
   }
 
-  const breadcrumbItems = [
-    { label: "Purchase Orders", url: "/purchase-orders" },
-    { label: "History" },
-  ];
-
-  const hasActiveFilters = keyword || fromDate || toDate;
+  const breadcrumbItems = [{ label: "Purchase Orders", url: "#" }, { label: "History" }];
 
   return (
     <div className="flex flex-col gap-6">
@@ -116,65 +98,6 @@ export default function HistoryPurchaseOrdersPage() {
       </div>
 
       <Card>
-        {/* Filters Section */}
-        <div className="mb-4 flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2">Search</label>
-            <span className="p-input-icon-left w-full">
-              <i className="pi pi-search" />
-              <InputText
-                value={keyword}
-                onChange={(e) => {
-                  setKeyword(e.target.value);
-                  setPageNumber(1);
-                }}
-                placeholder="Search by order number..."
-                className="w-full"
-              />
-            </span>
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2">From Date</label>
-            <Calendar
-              value={fromDate}
-              onChange={(e) => {
-                setFromDate(e.value as Date | null);
-                setPageNumber(1);
-              }}
-              placeholder="Select start date"
-              dateFormat="dd/mm/yy"
-              showIcon
-              className="w-full"
-            />
-          </div>
-
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2">To Date</label>
-            <Calendar
-              value={toDate}
-              onChange={(e) => {
-                setToDate(e.value as Date | null);
-                setPageNumber(1);
-              }}
-              placeholder="Select end date"
-              dateFormat="dd/mm/yy"
-              showIcon
-              className="w-full"
-            />
-          </div>
-
-          {hasActiveFilters && (
-            <Button
-              label="Clear Filters"
-              icon="pi pi-filter-slash"
-              outlined
-              severity="secondary"
-              onClick={handleClearFilters}
-            />
-          )}
-        </div>
-
         <AppDataTable
           value={ordersData?.data || []}
           loading={isLoading}
@@ -185,6 +108,12 @@ export default function HistoryPurchaseOrdersPage() {
             setPageNumber((e.page ?? 0) + 1);
             setPageSize(e.rows ?? pageSize);
           }}
+          searchValue={keyword}
+          onSearchChange={(value) => {
+            setKeyword(value);
+            setPageNumber(1);
+          }}
+          entityName="orders"
           emptyMessage="No purchase order history found"
           paginator
           rowsPerPageOptions={[10, 20, 50, 100]}

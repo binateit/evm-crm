@@ -71,7 +71,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     <>
       <TermsConditionsModal visible={showTermsModal} onAccept={handleAcceptTerms} />
 
-      <div className="flex h-screen overflow-hidden bg-gray-50">
+      <div className="flex h-screen overflow-hidden bg-white">
         {/* Mobile overlay */}
         {sidebarOpen && (
           <div
@@ -92,11 +92,11 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
         </div>
 
         {/* Main content area */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-white">
           <AppHeader onMenuClick={handleMenuClick} />
 
           {/* Page content */}
-          <main className="flex-1 overflow-y-auto p-5">{children}</main>
+          <main className="flex-1 overflow-y-auto p-5 bg-white">{children}</main>
         </div>
       </div>
     </>

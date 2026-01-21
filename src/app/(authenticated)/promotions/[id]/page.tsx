@@ -1,363 +1,274 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
-import { promotionService } from "@/lib/api/services";
-import type { PromotionDetailDto } from "@/types";
-import {
-  PageHeader,
-  PageBreadcrumb,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui";
-import { formatDate } from "@/lib/utils/formatters";
-import { ArrowLeft, Calendar, Tag, Package, Layers } from "lucide-react";
+import Image from "next/image";
+import { useRouter, useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "primereact/button";
+import { PageBreadcrumb } from "@/components/ui";
+import { useToast } from "@/lib/contexts/toast-context";
+import { format, differenceInDays, isPast, isFuture } from "date-fns";
+import { promotionService } from "@/lib/api/services";
+import { PromotionSlabDto } from "@/types";
 
-interface PromotionDetailPageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function PromotionDetailPage({ params }: PromotionDetailPageProps) {
-  const { id } = use(params);
+export default function PromotionDetailPage() {
   const router = useRouter();
-  const [promotion, setPromotion] = useState<PromotionDetailDto | null>(null);
-  const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const toast = useToast();
+  const promotionId = params.id as string;
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-  useEffect(() => {
-    async function fetchPromotion() {
-      if (!id) return;
-
-      try {
-        setLoading(true);
-        const data = await promotionService.getById(id);
-        setPromotion(data);
-      } catch (err) {
-        console.error("Error fetching promotion:", err);
-      } finally {
-        setLoading(false);
+  const { data: promotion, isLoading } = useQuery({
+    queryKey: ["promotion", promotionId],
+    queryFn: async () => {
+      const data = await promotionService.getById(promotionId);
+      if (!data) {
+        toast?.showError("Promotion not found");
+        router.push("/promotions");
+        return null;
       }
-    }
-
-    fetchPromotion();
-  }, [id]);
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const breadcrumbItems = [
     { label: "Promotions", url: "/promotions" },
-    { label: promotion?.promotionName || "Promotion Details", url: `/promotions/${id}` },
+    { label: promotion?.promotionName || "Details" },
   ];
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!promotion) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p className="text-gray-500 mb-4">Promotion not found</p>
-        <Button
-          label="Back to Promotions"
-          icon={<ArrowLeft className="w-4 h-4 mr-2" />}
-          outlined
-          onClick={() => router.push("/promotions")}
-        />
-      </div>
-    );
-  }
-
-  const isExpired = new Date(promotion.endDate) < new Date();
-  const isUpcoming = new Date(promotion.startDate) > new Date();
-
-  const getStatusBadge = () => {
-    if (isExpired) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
-          Expired
-        </span>
-      );
-    }
-    if (isUpcoming) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-600">
-          Upcoming
-        </span>
-      );
-    }
-    if (promotion.isActive) {
-      return (
-        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-green-100 text-green-600">
-          Active
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600">
-        Inactive
-      </span>
-    );
-  };
-
-  return (
-    <div className="space-y-4">
-      <PageBreadcrumb items={breadcrumbItems} />
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <PageHeader title={promotion.promotionName} subtitle={`Code: ${promotion.promotionCode}`} />
-
-        <div className="flex items-center gap-2">
-          <Button
-            label="Back"
-            icon={<ArrowLeft className="w-4 h-4 mr-2" />}
-            outlined
-            severity="secondary"
-            onClick={() => router.push("/promotions")}
-          />
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-500 font-medium">Loading promotion...</p>
         </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Main Details */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Promotion Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                {getStatusBadge()}
-                <span className="text-sm text-gray-500">{promotion.promotionTypeName}</span>
+  if (!promotion) return null;
+
+  const startDate = new Date(promotion.startDate);
+  const endDate = new Date(promotion.endDate);
+  const daysRemaining = differenceInDays(endDate, new Date());
+  const totalDays = differenceInDays(endDate, startDate);
+  const daysElapsed = differenceInDays(new Date(), startDate);
+  const progress = Math.min(Math.max((daysElapsed / totalDays) * 100, 0), 100);
+
+  const getTimelineStatus = () => {
+    if (isPast(endDate))
+      return { label: "Expired", color: "bg-red-500", textColor: "text-red-600" };
+    if (isFuture(startDate))
+      return { label: "Upcoming", color: "bg-amber-500", textColor: "text-amber-600" };
+    return { label: "Active", color: "bg-emerald-500", textColor: "text-emerald-600" };
+  };
+
+  const timelineStatus = getTimelineStatus();
+
+  return (
+    <div className="space-y-6">
+      <PageBreadcrumb items={breadcrumbItems} />
+
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
+
+        <div className="relative p-8 lg:p-10">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+            {/* Promo Image */}
+            {promotion.promoImageUrl && (
+              <div className="flex-shrink-0">
+                <div className="relative w-full lg:w-72 h-48 rounded-xl overflow-hidden ring-4 ring-white/10 shadow-2xl">
+                  <Image
+                    src={`${baseUrl}/${promotion.promoImageUrl}`}
+                    alt={promotion.promotionName}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-white/10 text-white/80 rounded-full">
+                      {promotion.promotionTypeName}
+                    </span>
+                    <span
+                      className={`px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${
+                        promotion.isActive
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-red-500/20 text-red-300"
+                      }`}
+                    >
+                      {promotion.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight">
+                    {promotion.promotionName}
+                  </h1>
+                  <p className="text-slate-400 font-mono text-sm">{promotion.promotionCode}</p>
+                </div>
               </div>
 
               {promotion.description && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-1">Description</p>
-                  <p className="text-gray-900">{promotion.description}</p>
-                </div>
+                <p className="text-slate-300 text-lg leading-relaxed mb-6 max-w-2xl">
+                  {promotion.description}
+                </p>
               )}
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Start Date</p>
-                    <p className="font-medium">{formatDate(promotion.startDate)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-                    <Calendar className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">End Date</p>
-                    <p className="font-medium">{formatDate(promotion.endDate)}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Applicable Product/Category */}
-              {(promotion.brandName || promotion.categoryName || promotion.skuName) && (
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm font-medium text-gray-900 mb-3">Applicable To</p>
-                  <div className="space-y-2">
-                    {promotion.brandName && (
-                      <div className="flex items-center gap-2">
-                        <Tag className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm">Brand: {promotion.brandName}</span>
-                      </div>
-                    )}
-                    {promotion.categoryName && (
-                      <div className="flex items-center gap-2">
-                        <Layers className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm">Category: {promotion.categoryName}</span>
-                      </div>
-                    )}
-                    {promotion.skuName && (
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm">Product: {promotion.skuName}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {promotion.discountPercent && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Discount</span>
-                  <span className="font-medium text-green-600">{promotion.discountPercent}%</span>
-                </div>
-              )}
-
-              {promotion.minimumQuantity && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Min. Quantity</span>
-                  <span className="font-medium">{promotion.minimumQuantity}</span>
-                </div>
-              )}
-
-              {promotion.minimumOrderValue && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Min. Order Value</span>
-                  <span className="font-medium">
-                    {promotion.minimumOrderValue.toLocaleString("en-IN", {
-                      style: "currency",
-                      currency: "INR",
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {promotion.maxDiscountAmount && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Max. Discount</span>
-                  <span className="font-medium">
-                    {promotion.maxDiscountAmount.toLocaleString("en-IN", {
-                      style: "currency",
-                      currency: "INR",
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {promotion.maxUsagePerDistributor && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Max Usage</span>
-                  <span className="font-medium">{promotion.maxUsagePerDistributor} times</span>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Priority</span>
-                <span className="font-medium">{promotion.priority}</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Stackable</span>
-                <span className="font-medium">{promotion.canStackWithOthers ? "Yes" : "No"}</span>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                <span className="text-sm text-gray-500">Current Usage</span>
-                <span className="font-medium">
-                  {promotion.currentUsageCount}
-                  {promotion.maxTotalUsage ? ` / ${promotion.maxTotalUsage}` : ""}
-                </span>
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  label="Back to Promotions"
+                  icon="pi pi-arrow-left"
+                  outlined
+                  severity="secondary"
+                  onClick={() => router.push("/promotions")}
+                  className="border-white/20 text-white hover:bg-white/10"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Slabs */}
-      {promotion.slabs && promotion.slabs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Promotion Slabs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
-                      Quantity Range
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
-                      Free Quantity
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
-                      Discount %
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
-                      Special Rate
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {promotion.slabs.map((slab, index) => (
-                    <tr key={slab.id || index} className="border-b border-gray-100">
-                      <td className="py-3 px-4 text-sm">
-                        {slab.fromQuantity} - {slab.toQuantity ?? "∞"}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right">{slab.freeQuantity ?? "-"}</td>
-                      <td className="py-3 px-4 text-sm text-right text-green-600">
-                        {slab.discountPercent ? `${slab.discountPercent}%` : "-"}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right">
-                        {slab.specialRate
-                          ? slab.specialRate.toLocaleString("en-IN", {
-                              style: "currency",
-                              currency: "INR",
-                            })
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Timeline Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${timelineStatus.color} animate-pulse`} />
+            <h2 className="text-lg font-bold text-slate-900">Campaign Timeline</h2>
+          </div>
+          <span className={`text-sm font-semibold ${timelineStatus.textColor}`}>
+            {timelineStatus.label}
+            {daysRemaining > 0 && ` • ${daysRemaining} days remaining`}
+          </span>
+        </div>
 
-      {/* Requirements */}
-      {promotion.requirements && promotion.requirements.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Type</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
-                      Product
-                    </th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
-                      Required Qty
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {promotion.requirements.map((req, index) => (
-                    <tr key={req.id || index} className="border-b border-gray-100">
-                      <td className="py-3 px-4 text-sm capitalize">{req.requirementType}</td>
-                      <td className="py-3 px-4 text-sm">
-                        <div>
-                          <p className="font-medium">{req.skuName || "Any"}</p>
-                          {req.skuCode && <p className="text-xs text-gray-500">{req.skuCode}</p>}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right">{req.requiredQuantity}</td>
+        <div className="relative mb-4">
+          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isPast(endDate) ? "bg-red-500" : "bg-gradient-to-r from-emerald-500 to-teal-500"
+              }`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between text-sm">
+          <div>
+            <p className="text-slate-500 mb-1">Start Date</p>
+            <p className="font-semibold text-slate-900">{format(startDate, "MMM dd, yyyy")}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-slate-500 mb-1">End Date</p>
+            <p className="font-semibold text-slate-900">{format(endDate, "MMM dd, yyyy")}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - 2/3 width */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Slabs Table */}
+          {promotion.slabs && promotion.slabs.length > 0 && (
+            <InfoSection
+              title="Quantity Slabs"
+              icon="pi-list"
+              badge={`${promotion.slabs.length} slabs`}
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Buy Quantity
+                      </th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                        Get Free
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {[...promotion.slabs]
+                      .sort((a, b) => a.quantity - b.quantity)
+                      .map((slab: PromotionSlabDto, idx: number) => (
+                        <tr key={slab.id} className={idx % 2 === 0 ? "bg-slate-50/50" : ""}>
+                          <td className="py-3 px-4">
+                            <span className="font-semibold text-slate-900">{slab.quantity}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                              +{slab.freeQuantity} FREE
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </InfoSection>
+          )}
+        </div>
+
+        {/* Right Column - 1/3 width */}
+        <div className="space-y-6">
+          {/* SKU Details */}
+          {promotion.skuName && (
+            <InfoSection title="Applicable SKU" icon="pi-box">
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                <p className="font-semibold text-slate-900 mb-1">{promotion.skuName}</p>
+                <p className="text-sm text-slate-500 font-mono">{promotion.skuCode}</p>
+              </div>
+            </InfoSection>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper Components
+function InfoSection({
+  title,
+  icon,
+  badge,
+  children,
+}: {
+  title: string;
+  icon: string;
+  badge?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center gap-3">
+          <i className={`pi ${icon} text-slate-400`} />
+          <h3 className="font-bold text-slate-900">{title}</h3>
+        </div>
+        {badge && (
+          <span className="px-2.5 py-1 text-xs font-semibold bg-slate-200 text-slate-600 rounded-full">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className="p-6">{children}</div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   FilePlus,
   Clock,
   History,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -39,24 +40,15 @@ const navItems: NavItem[] = [
     href: "/dashboard",
   },
   {
-    icon: FilePlus,
-    label: "Create PO",
-    href: "/purchase-orders/create",
-  },
-  {
-    icon: FileText,
-    label: "Draft POs",
-    href: "/purchase-orders/drafts",
-  },
-  {
-    icon: Clock,
-    label: "Pending Approval POs",
-    href: "/purchase-orders/pending",
-  },
-  {
-    icon: History,
-    label: "Purchase Order History",
-    href: "/purchase-orders/history",
+    icon: ShoppingCart,
+    label: "Purchase Orders",
+    href: "/purchase-orders",
+    children: [
+      { label: "Create PO", href: "/purchase-orders/create", icon: FilePlus },
+      { label: "Draft POs", href: "/purchase-orders/drafts", icon: FileText },
+      { label: "Pending Approval", href: "/purchase-orders/pending", icon: Clock },
+      { label: "Order History", href: "/purchase-orders/history", icon: History },
+    ],
   },
   // {
   //   icon: Receipt,
