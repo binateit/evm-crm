@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: Clock,
-    label: "My Pending POs",
+    label: "Pending Approval POs",
     href: "/purchase-orders/pending",
   },
   {
