@@ -12,7 +12,6 @@ import {
   ChevronRight,
   FileText,
   DollarSign,
-  Package,
   Gift,
   FilePlus,
   Clock,
