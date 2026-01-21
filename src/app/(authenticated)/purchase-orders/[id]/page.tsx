@@ -99,9 +99,7 @@ export default function PurchaseOrderDetailPage({ params }: PageProps) {
   if (!order) {
     return (
       <div className="flex flex-col gap-6">
-        <PageBreadcrumb
-          items={[{ label: "Purchase Orders", url: "/purchase-orders" }, { label: "Not Found" }]}
-        />
+        <PageBreadcrumb items={[{ label: "Purchase Orders", url: "#" }, { label: "Not Found" }]} />
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-lg text-muted-foreground">Purchase order not found</p>
@@ -118,7 +116,7 @@ export default function PurchaseOrderDetailPage({ params }: PageProps) {
     <div className="flex flex-col gap-6">
       <PageBreadcrumb
         items={[
-          { label: "Purchase Orders", url: "/purchase-orders" },
+          { label: "Purchase Orders", url: "#" },
           { label: order.orderNumber || "Order Details" },
         ]}
       />

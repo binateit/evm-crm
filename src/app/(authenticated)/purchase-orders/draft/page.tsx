@@ -126,10 +126,7 @@ export default function DraftPurchaseOrdersPage() {
     toast?.showError("Failed to load draft purchase orders");
   }
 
-  const breadcrumbItems = [
-    { label: "Purchase Orders", url: "/purchase-orders" },
-    { label: "Draft" },
-  ];
+  const breadcrumbItems = [{ label: "Purchase Orders", url: "#" }, { label: "Draft" }];
 
   return (
     <div className="flex flex-col gap-6">

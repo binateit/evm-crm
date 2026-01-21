@@ -12,7 +12,7 @@ import type { SaleOrderFormData } from "@/lib/validations/crm";
 
 const breadcrumbItems = [
   { label: "CRM", url: "/crm" },
-  { label: "Purchase Orders", url: "/purchase-orders" },
+  { label: "Purchase Orders", url: "#" },
   { label: "Create" },
 ];
 

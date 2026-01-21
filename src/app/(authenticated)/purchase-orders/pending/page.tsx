@@ -84,10 +84,7 @@ export default function PendingPurchaseOrdersPage() {
     toast?.showError("Failed to load pending purchase orders");
   }
 
-  const breadcrumbItems = [
-    { label: "Purchase Orders", url: "/purchase-orders" },
-    { label: "Pending" },
-  ];
+  const breadcrumbItems = [{ label: "Purchase Orders", url: "#" }, { label: "Pending" }];
 
   return (
     <div className="flex flex-col gap-6">

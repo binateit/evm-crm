@@ -385,8 +385,7 @@ export interface PromotionDto {
 
 export interface PromotionSlabDto {
   id: string;
-  fromQuantity: number;
-  toQuantity?: number | null;
+  quantity: number;
   freeQuantity?: number | null;
   discountPercent?: number | null;
   specialRate?: number | null;
@@ -394,32 +393,19 @@ export interface PromotionSlabDto {
 
 export interface PromotionRequirementDto {
   id: string;
-  requirementType: string;
-  skuId: string;
+  requirementType?: string | null;
+  skuId?: string | null;
   skuCode?: string | null;
   skuName?: string | null;
-  requiredQuantity: number;
-  displayOrder: number;
+  requiredQuantity?: number | null;
+  displayOrder?: number | null;
 }
 
 export interface PromotionDetailDto extends PromotionDto {
-  brandId?: string | null;
-  brandName?: string | null;
-  masterCategoryId?: string | null;
-  masterCategoryName?: string | null;
-  categoryId?: string | null;
-  categoryName?: string | null;
-  subCategoryId?: string | null;
-  subCategoryName?: string | null;
-  applicableToSKUIds?: string[] | null;
+  skuId?: string | null;
   skuCode?: string | null;
   skuName?: string | null;
-  minimumQuantity?: number | null;
-  minimumOrderValue?: number | null;
-  applicableToDistributorIds?: string[] | null;
-  discountPercent?: number | null;
-  discountAmount?: number | null;
-  maxDiscountAmount?: number | null;
+  promoImageUrl?: string | null;
   maxUsagePerDistributor?: number | null;
   slabs: PromotionSlabDto[];
   requirements: PromotionRequirementDto[];
