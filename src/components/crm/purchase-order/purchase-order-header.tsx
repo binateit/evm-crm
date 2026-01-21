@@ -145,9 +145,7 @@ export function PurchaseOrderHeader({
                 itemTemplate={(item: DistributorShippingAddressDto) => (
                   <div className="flex flex-col py-1">
                     <div className="font-medium">{item.addressName}</div>
-                    <div className="text-sm text-gray-500">
-                      {item.city}, {item.stateName}
-                    </div>
+                    <div className="text-sm text-gray-500">{item.address1},</div>
                   </div>
                 )}
               />

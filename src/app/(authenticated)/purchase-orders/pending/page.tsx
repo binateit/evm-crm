@@ -40,10 +40,6 @@ export default function PendingPurchaseOrdersPage() {
     router.push(`/purchase-orders/${orderId}`);
   };
 
-  const handleCreateOrder = () => {
-    router.push("/purchase-orders/create");
-  };
-
   // Table column templates
   const orderNumberTemplate = (rowData: SaleOrderListDto) => {
     return (
@@ -101,12 +97,6 @@ export default function PendingPurchaseOrdersPage() {
         <PageHeader
           title="Pending Purchase Orders"
           subtitle="Track your purchase orders in progress"
-        />
-        <Button
-          label="Create PO"
-          icon="pi pi-plus"
-          onClick={handleCreateOrder}
-          severity="success"
         />
       </div>
 

@@ -130,13 +130,27 @@ export default function PricingListPage() {
 
       {/* Products Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="p-4">
-                <Skeleton width="100%" height="200px" className="mb-3" />
-                <Skeleton width="100%" height="1.5rem" className="mb-2" />
-                <Skeleton width="60%" height="1rem" />
+                <div className="flex flex-col md:flex-row gap-4">
+                  <Skeleton
+                    width="100%"
+                    height="160px"
+                    className="md:w-[128px] md:h-[128px] flex-shrink-0"
+                  />
+                  <div className="flex-1">
+                    <Skeleton width="60%" height="1rem" className="mb-2" />
+                    <Skeleton width="100%" height="1.5rem" className="mb-2" />
+                    <Skeleton width="80%" height="1rem" className="mb-2" />
+                    <Skeleton width="70%" height="1rem" />
+                  </div>
+                  <div className="w-full md:w-[200px] border-t md:border-t-0 pt-3 md:pt-0">
+                    <Skeleton width="100%" height="2rem" className="mb-2" />
+                    <Skeleton width="100%" height="2rem" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -156,108 +170,98 @@ export default function PricingListPage() {
       ) : (
         <>
           {/* Product Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {products.map((product) => (
-              <Card key={product.skuId} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                  {/* Product Image */}
-                  <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
-                    {product.primaryImageUrl ? (
-                      <img
-                        src={getImageUrl(product.primaryImageUrl)}
-                        alt={product.skuName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <Package className="w-16 h-16 text-gray-300" />
-                      </div>
-                    )}
-                  </div>
+              <Card key={product.skuId} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row gap-4 relative">
+                    {/* Status Badge - Absolute positioned */}
+                    <span
+                      className={`absolute top-2 right-2 px-2 py-1 text-xs rounded-full z-10 ${
+                        product.statusName === "Active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {product.statusName}
+                    </span>
 
-                  {/* Product Details */}
-                  <div className="p-4 space-y-2">
-                    {/* Part Code */}
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Tag className="w-3 h-3" />
-                      {product.partCode}
-                    </div>
-
-                    {/* Product Name */}
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
-                      {product.skuName}
-                    </h3>
-
-                    {/* Brand & Category */}
-                    <div className="text-xs text-gray-600">
-                      {product.brandName && (
-                        <span className="font-medium">{product.brandName}</span>
-                      )}
-                      {product.categoryName && (
-                        <span className="ml-1">• {product.categoryName}</span>
-                      )}
-                    </div>
-
-                    {/* Pricing */}
-                    <div className="pt-2 border-t">
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wider mb-1">
-                          MRP
-                        </p>
-                        <p className="text-lg font-bold text-blue-600">
-                          ₹{product.mrp?.toFixed(2)}
-                        </p>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-600 font-medium uppercase tracking-wider mb-1">
-                          DP
-                        </p>
-                        <p className="text-lg font-bold text-green-600">
-                          ₹{product.sellingPrice?.toFixed(2)}
-                        </p>
-                      </div>
-                      {/* {product.mrp &&
-                      product.sellingPrice &&
-                      product.mrp !== product.sellingPrice ? (
-                        <div className="space-y-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-green-600">
-                              {formatCurrency(product.sellingPrice)}
-                            </span>
-                            <span className="text-sm text-gray-400 line-through">
-                              {formatCurrency(product.mrp)}
-                            </span>
-                          </div>
-                          {product.discountAmount && (
-                            <p className="text-xs text-green-600">
-                              Save {formatCurrency(product.discountAmount)}
-                            </p>
-                          )}
-                        </div>
+                    {/* Left: Product Image */}
+                    <div className="relative h-40 md:h-32 md:w-32 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                      {product.primaryImageUrl ? (
+                        <img
+                          src={getImageUrl(product.primaryImageUrl)}
+                          alt={product.skuName}
+                          className="w-full h-full object-cover"
+                        />
                       ) : (
-                        <div className="text-2xl font-bold text-gray-900">
-                          {formatCurrency(product.sellingPrice || product.mrp || 0)}
+                        <div className="flex items-center justify-center h-full">
+                          <Package className="w-12 h-12 text-gray-300" />
                         </div>
-                      )} */}
+                      )}
                     </div>
 
-                    {/* Additional Info */}
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-2">
-                      <span>UOM: {product.uom}</span>
-                      {product.gstApplicable && <span>GST: {product.gstPercentage}%</span>}
+                    {/* Center: Product Details */}
+                    <div className="flex-1 min-w-0">
+                      {/* Part Code */}
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                        <Tag className="w-3 h-3" />
+                        <span className="font-mono">{product.partCode}</span>
+                      </div>
+
+                      {/* Product Name */}
+                      <h3 className="font-semibold text-gray-900 text-base mb-2 pr-16 md:pr-0">
+                        {product.skuName}
+                      </h3>
+
+                      {/* Model & Brand */}
+                      <div className="text-sm text-gray-600 mb-2 flex flex-wrap gap-x-3">
+                        {product.modelNumber && <span>Model: {product.modelNumber}</span>}
+                        {product.brandName && <span>Brand: {product.brandName}</span>}
+                      </div>
+
+                      {/* HSN & Category Info */}
+                      <div className="text-xs text-gray-500 flex flex-wrap gap-x-3">
+                        <span>HSN: {product.hsnCode || "N/A"}</span>
+                        {product.categoryName && <span>• {product.categoryName}</span>}
+                      </div>
                     </div>
 
-                    {/* Status */}
-                    <div className="pt-2">
-                      <span
-                        className={`inline-block px-2 py-1 text-xs rounded-full ${
-                          product.statusName === "Active"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {product.statusName}
-                      </span>
+                    {/* Right: Pricing & Status */}
+                    <div className="flex flex-col gap-2 md:min-w-[200px] md:items-end border-t md:border-t-0 pt-3 md:pt-0">
+                      {/* Pricing Grid */}
+                      <div className="grid grid-cols-2 gap-4 w-full">
+                        {/* MRP */}
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">MRP</p>
+                          <p className="text-xl font-bold text-blue-600">
+                            ₹{product.mrp?.toFixed(2) || "0.00"}
+                          </p>
+                        </div>
+
+                        {/* DP */}
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium mb-1">DP</p>
+                          <p className="text-xl font-bold text-green-600">
+                            ₹{product.sellingPrice?.toFixed(2) || "0.00"}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Discount Badge */}
+                      {product.discountAmount && product.discountAmount > 0 && (
+                        <div className="bg-red-50 border border-red-200 rounded px-3 py-1.5 w-full">
+                          <p className="text-sm font-semibold text-red-600">
+                            Discount: ₹{product.discountAmount.toFixed(2)} (
+                            {product.discountPercentage?.toFixed(1)}%)
+                          </p>
+                        </div>
+                      )}
+
+                      {/* GST Info */}
+                      <div className="text-xs text-gray-600 w-full md:text-right">
+                        GST: {product.gstPercentage}%
+                      </div>
                     </div>
                   </div>
                 </CardContent>

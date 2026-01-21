@@ -3,22 +3,18 @@
 import { use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageBreadcrumb } from "@/components/ui/PageBreadcrumb";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { SaleOrderStatusBadge } from "@/components/crm/sale-order/sale-order-status-badge";
 import { SaleOrderSummary } from "@/components/crm/sale-order/sale-order-summary";
 import { saleOrderService } from "@/lib/api/services/sale-order.service";
-import { formatCurrency, formatDate } from "@/lib/utils/formatters";
+import { formatDate } from "@/lib/utils/formatters";
 import { useToast } from "@/lib/contexts/toast-context";
 import { Button } from "primereact/button";
-import { DataTable } from "primereact/datatable";
-import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { InputTextarea } from "primereact/inputtextarea";
 import { useState } from "react";
 import { useDistributor } from "@/hooks/use-distributor";
-import type { SaleOrderItemDto } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -87,12 +83,6 @@ export default function PurchaseOrderDetailPage({ params }: PageProps) {
     }
   };
 
-  // Table column templates
-  const priceTemplate = (rowData: SaleOrderItemDto) => formatCurrency(rowData.unitPrice);
-  const discountTemplate = (rowData: SaleOrderItemDto) => `${rowData.discountPercent}%`;
-  const taxTemplate = (rowData: SaleOrderItemDto) => `${rowData.taxPercent}%`;
-  const lineTotalTemplate = (rowData: SaleOrderItemDto) => formatCurrency(rowData.lineTotal);
-
   if (isLoading) {
     return (
       <div className="flex flex-col gap-6">
@@ -140,63 +130,6 @@ export default function PurchaseOrderDetailPage({ params }: PageProps) {
         />
         <Button label="Back" icon="pi pi-arrow-left" outlined onClick={handleBack} />
       </div>
-
-      {/* Order Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Status</label>
-              <div className="mt-1">
-                <SaleOrderStatusBadge statusId={order.statusId} statusName={order.statusName} />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Payment Type</label>
-              <p className="mt-1">{order.paymentType}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Expected Delivery</label>
-              <p className="mt-1">
-                {order.expectedDeliveryDate ? formatDate(order.expectedDeliveryDate) : "N/A"}
-              </p>
-            </div>
-            {order.salespersonName && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Salesperson</label>
-                <p className="mt-1">{order.salespersonName}</p>
-              </div>
-            )}
-            {order.notes && (
-              <div className="col-span-full">
-                <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                <p className="mt-1">{order.notes}</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Order Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Items ({order.items?.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable value={order.items || []} stripedRows>
-            <Column field="skuCode" header="SKU Code" />
-            <Column field="skuName" header="Product Name" />
-            <Column field="quantity" header="Qty" />
-            <Column field="unitPrice" header="Unit Price" body={priceTemplate} />
-            <Column field="discountPercent" header="Discount" body={discountTemplate} />
-            <Column field="taxPercent" header="Tax" body={taxTemplate} />
-            <Column field="lineTotal" header="Line Total" body={lineTotalTemplate} />
-          </DataTable>
-        </CardContent>
-      </Card>
 
       {/* Order Summary */}
       <SaleOrderSummary saleOrder={order} />

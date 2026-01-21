@@ -32,9 +32,6 @@ export function AppHeader({ onMenuClick }: AppHeaderProps) {
           <h1 className="text-sm font-medium text-gray-900">
             Welcome, {session?.user?.distributorName || "Distributor"}
           </h1>
-          <p className="text-xs text-gray-500">
-            Distributor Code: {session?.user?.distributorCode || "-"}
-          </p>
         </div>
       </div>
 

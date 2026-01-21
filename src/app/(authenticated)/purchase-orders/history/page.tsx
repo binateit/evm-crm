@@ -46,10 +46,6 @@ export default function HistoryPurchaseOrdersPage() {
     router.push(`/purchase-orders/${orderId}`);
   };
 
-  const handleCreateOrder = () => {
-    router.push("/purchase-orders/create");
-  };
-
   const handleClearFilters = () => {
     setKeyword("");
     setFromDate(null);
@@ -116,12 +112,6 @@ export default function HistoryPurchaseOrdersPage() {
         <PageHeader
           title="Purchase Order History"
           subtitle="View all completed, cancelled, and rejected orders"
-        />
-        <Button
-          label="Create PO"
-          icon="pi pi-plus"
-          onClick={handleCreateOrder}
-          severity="success"
         />
       </div>
 

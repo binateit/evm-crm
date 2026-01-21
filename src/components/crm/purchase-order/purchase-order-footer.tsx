@@ -23,6 +23,7 @@ export function PurchaseOrderFooter({
   const totals = useMemo(() => {
     let totalQuantity = 0;
     let totalTaxableAmount = 0;
+    let totalDiscountAmount = 0;
     let cgstAmount = 0;
     let sgstAmount = 0;
     let igstAmount = 0;
@@ -30,6 +31,7 @@ export function PurchaseOrderFooter({
     items.forEach((item) => {
       totalQuantity += item.quantity || 0;
       totalTaxableAmount += item.taxableAmount || 0;
+      totalDiscountAmount += item.discountAmount || 0;
       cgstAmount += item.cgstAmount || 0;
       sgstAmount += item.sgstAmount || 0;
       igstAmount += item.igstAmount || 0;
@@ -40,6 +42,7 @@ export function PurchaseOrderFooter({
     return {
       totalQuantity,
       totalTaxableAmount,
+      totalDiscountAmount,
       cgstAmount,
       sgstAmount,
       igstAmount,
@@ -65,6 +68,13 @@ export function PurchaseOrderFooter({
             <span className="text-sm text-gray-600">Total Taxable Amount:</span>
             <span className="text-sm font-semibold text-gray-900">
               {formatCurrency(totals.totalTaxableAmount)}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-sm text-gray-600">Total Discount:</span>
+            <span className="text-sm font-semibold text-green-600">
+              {formatCurrency(totals.totalDiscountAmount)}
             </span>
           </div>
 

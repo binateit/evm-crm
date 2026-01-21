@@ -80,7 +80,7 @@ export interface GetDistributorPricingListQuery {
   maxSellingPrice?: number | null;
 
   // Sorting
-  sortBy?: "partcode" | "skuname" | "mrp" | "sellingprice" | "discount" | null;
+  sortBy?: "skuname" | "partcode" | "mrp" | "sellingprice" | "discount" | null;
   sortDirection?: "asc" | "desc" | null;
 }
 
