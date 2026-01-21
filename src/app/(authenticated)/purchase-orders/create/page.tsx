@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { PageBreadcrumb, PageHeader } from "@/components/ui";
@@ -16,7 +16,7 @@ const breadcrumbItems = [
   { label: "Create" },
 ];
 
-export default function CreatePurchaseOrderPage() {
+function CreatePurchaseOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { distributorId, isLoading: authLoading } = useDistributor();
@@ -115,5 +115,23 @@ export default function CreatePurchaseOrderPage() {
         initialPromotionClaim={initialPromotionClaim}
       />
     </div>
+  );
+}
+
+export default function CreatePurchaseOrderPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-5 lg:space-y-6">
+          <PageBreadcrumb items={breadcrumbItems} />
+          <PageHeader title="Create Purchase Order" description="Loading..." />
+          <div className="flex items-center justify-center py-12">
+            <i className="pi pi-spin pi-spinner text-2xl text-gray-400" />
+          </div>
+        </div>
+      }
+    >
+      <CreatePurchaseOrderContent />
+    </Suspense>
   );
 }
