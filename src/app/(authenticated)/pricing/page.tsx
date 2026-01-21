@@ -5,7 +5,6 @@ import { pricingService } from "@/lib/api/services/pricing.service";
 import type { DistributorPricingDto, GetDistributorPricingListQuery } from "@/types/pricing.types";
 import { DEFAULT_PRICING_QUERY, PRICING_SORT_OPTIONS } from "@/types/pricing.types";
 import { PageHeader, PageBreadcrumb, Card, CardContent } from "@/components/ui";
-import { formatCurrency } from "@/lib/utils/formatters";
 import { Search, Tag, Percent, Package } from "lucide-react";
 import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
