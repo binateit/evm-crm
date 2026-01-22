@@ -10,8 +10,8 @@ export interface OrderItem {
   skuId: string;
   skuName: string | null;
   skuCode: string | null;
-  brandName: string | null;
-  categoryName: string | null;
+  brandName?: string | null;
+  categoryName?: string | null;
 
   // Pricing & stock
   sellingPrice: number;

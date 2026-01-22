@@ -8,8 +8,6 @@ export const saleOrderItemSchema = z.object({
   skuId: z.string().min(1, "SKU is required"),
   skuName: z.string().nullable(),
   skuCode: z.string().nullable(),
-  brandName: z.string().nullable(),
-  categoryName: z.string().nullable(),
 
   // Pricing & stock
   sellingPrice: z.number(),
