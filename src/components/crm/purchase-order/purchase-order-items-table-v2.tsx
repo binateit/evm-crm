@@ -167,8 +167,6 @@ export function PurchaseOrderItemsTableV2({
       skuId: "",
       skuName: null,
       skuCode: null,
-      brandName: null,
-      categoryName: null,
 
       // Pricing & stock (defaults)
       sellingPrice: 0,
@@ -225,8 +223,6 @@ export function PurchaseOrderItemsTableV2({
         skuId: "",
         skuName: null,
         skuCode: null,
-        brandName: null,
-        categoryName: null,
         sellingPrice: 0,
         availableStock: 0,
         pdc: 0,
@@ -267,8 +263,6 @@ export function PurchaseOrderItemsTableV2({
           skuId: skuDetails.id,
           skuName: skuDetails.skuName,
           skuCode: skuDetails.skuCode,
-          brandName: skuDetails.brandName,
-          categoryName: skuDetails.categoryName,
 
           // Pricing & stock
           sellingPrice: skuDetails.sellingPrice,
@@ -314,8 +308,6 @@ export function PurchaseOrderItemsTableV2({
         skuId: skuOption.data.id,
         skuName: skuOption.data.skuName,
         skuCode: skuOption.data.skuCode,
-        brandName: skuOption.data.brandName,
-        categoryName: skuOption.data.categoryName,
         sellingPrice: skuOption.data.sellingPrice || 0,
         availableStock: 0,
         pdc: 0,
@@ -483,8 +475,6 @@ export function PurchaseOrderItemsTableV2({
                   id: item.skuId,
                   skuName: item.skuName || "",
                   skuCode: item.skuCode || "",
-                  brandName: item.brandName || "",
-                  categoryName: item.categoryName || "",
                   sellingPrice: item.sellingPrice,
                   availableStock: item.availableStock,
                   pdc: item.pdc,

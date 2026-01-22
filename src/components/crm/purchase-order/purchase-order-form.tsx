@@ -213,8 +213,6 @@ export function PurchaseOrderForm({
         skuId: skuDetails.id,
         skuName: skuDetails.skuName,
         skuCode: skuDetails.skuCode,
-        brandName: skuDetails.brandName,
-        categoryName: skuDetails.categoryName,
         sellingPrice: skuDetails.sellingPrice,
         availableStock: skuDetails.availableStock || 0,
         pdc,
