@@ -69,7 +69,7 @@ const navItems: NavItem[] = [
   },
   {
     icon: ClipboardList,
-    label: "Stock Submissions",
+    label: "My Stock",
     href: "/stock-submissions",
     children: [
       { label: "New Submission", href: "/stock-submissions/create", icon: PackagePlus },
