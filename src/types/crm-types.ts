@@ -522,3 +522,80 @@ export type CategoryDropdownDtoListResult = Result<CategoryDropdownDto[]>;
 export type PaymentTypeDtoListResult = Result<PaymentTypeDto[]>;
 
 export type GuidResult = Result<string>;
+
+// ============ Distributor Stock Submission Types ============
+
+export interface DistributorStockSubmissionListDto {
+  submissionId: string;
+  itemId: string;
+  distributorName: string;
+  skuName: string;
+  skuCount: number;
+  submissionDate: string; // DateOnly
+}
+
+export interface DistributorStockSubmissionDetailDto {
+  id: string;
+  submissionNumber: string;
+  distributorId: string;
+  distributorCode: string;
+  distributorName: string;
+  submissionPeriod: string; // DateOnly
+  periodDisplay: string;
+  submissionYear: number;
+  submissionMonth: number;
+  statusId: number; // 1=Draft, 2=Submitted
+  statusName: string;
+  totalSKUCount: number;
+  totalQuantity: number;
+  submittedAt: string | null;
+  remarks: string | null;
+  items: DistributorStockSubmissionItemDto[];
+  createdOn: string;
+  createdBy: string;
+  lastModifiedOn: string;
+  lastModifiedBy: string | null;
+}
+
+export interface DistributorStockSubmissionItemDto {
+  id: string;
+  skuId: string;
+  skuCode: string;
+  skuName: string;
+  quantity: number;
+  remarks: string | null;
+}
+
+export interface StockSubmissionItemRequest {
+  skuId: string;
+  quantity: number;
+  remarks?: string | null;
+}
+
+export interface CreateDistributorStockSubmissionCommand {
+  distributorId?: string; // Optional - auto-detected for "my" endpoints
+  submissionPeriod: string; // DateOnly format: YYYY-MM-DD
+  remarks?: string | null;
+  items: StockSubmissionItemRequest[];
+}
+
+export interface UpdateDistributorStockSubmissionCommand {
+  id: string;
+  remarks?: string | null;
+  items: StockSubmissionItemRequest[];
+}
+
+export interface SearchMyStockSubmissionsQuery {
+  keyword?: string | null;
+  pageNumber?: number;
+  pageSize?: number;
+  statusId?: number | null;
+  submissionYear?: number | null;
+  submissionMonth?: number | null;
+}
+
+export type DistributorStockSubmissionDetailDtoResult = Result<DistributorStockSubmissionDetailDto>;
+export type DistributorStockSubmissionListDtoPaginationResponse =
+  PaginatedResponse<DistributorStockSubmissionListDto>;
+export type DistributorStockSubmissionListDtoPaginationResponseResult =
+  Result<DistributorStockSubmissionListDtoPaginationResponse>;

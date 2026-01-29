@@ -127,13 +127,17 @@ export default function LoginPage() {
                       placeholder="Enter your password"
                       disabled={isSubmitting}
                       feedback={false}
+                      toggleMask
                       value={field.value}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
                       inputRef={field.ref}
                       pt={{
+                        root: { className: "w-full" },
                         input: {
-                          className: errors.password ? "p-invalid" : "",
+                          root: {
+                            className: errors.password ? "p-invalid" : "",
+                          },
                         },
                       }}
                     />

@@ -4,3 +4,4 @@ export { distributorService } from "./distributor.service";
 export { shippingAddressService } from "./shipping-address.service";
 export { dropdownService } from "./dropdown.service";
 export { skuService, type AllocatedSkuDto } from "./sku.service";
+export { distributorStockSubmissionService } from "./distributor-stock-submission.service";

@@ -90,4 +90,15 @@ export const ENDPOINTS = {
     BY_DISTRIBUTOR: (distributorId: string) => `/v1/crm/SaleOrders/by-distributor/${distributorId}`,
     BY_ID: (id: string) => `/v1/crm/SaleOrders/${id}`,
   },
+
+  // Distributor Stock Submissions - My submissions
+  DISTRIBUTOR_STOCK_SUBMISSION: {
+    MY_SUBMISSIONS: "/v1/crm/distributorstocksubmissions/my",
+    MY_SUBMISSION_BY_ID: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}`,
+    MY_HISTORY: "/v1/crm/distributorstocksubmissions/my/history",
+    CREATE: "/v1/crm/distributorstocksubmissions/my/create",
+    UPDATE: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}`,
+    DELETE: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}`,
+    SUBMIT: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}/submit`,
+  },
 } as const;

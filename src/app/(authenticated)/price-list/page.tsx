@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Paginator } from "primereact/paginator";
-import { Search, X } from "lucide-react";
 
 import { PageBreadcrumb, PageHeader } from "@/components/ui";
+import { useDebounce } from "@/hooks";
 import { pricingService } from "@/lib/api/services/pricing.service";
 
 const breadcrumbItems = [{ label: "CRM", url: "/crm" }, { label: "Pricing List" }];
@@ -13,34 +13,36 @@ const breadcrumbItems = [{ label: "CRM", url: "/crm" }, { label: "Pricing List" 
 export default function PricingListPage() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-  const [pageNumber, setPageNumber] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [keyword, setKeyword] = useState("");
+  // Search keyword with debounce
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const debouncedKeyword = useDebounce(searchKeyword, 300);
 
-  // Pricing list query
+  // Pagination state
+  const [first, setFirst] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
+
+  // Calculate current page number
+  const pageNumber = Math.floor(first / pageSize) + 1;
+
+  // Pricing list query - auto fetches when dependencies change
   const { data, isLoading } = useQuery({
-    queryKey: ["pricing-list", pageNumber, pageSize, keyword],
+    queryKey: ["pricing-list", debouncedKeyword, pageNumber, pageSize],
     queryFn: () =>
       pricingService.getMyPricingList({
         pageNumber,
         pageSize,
-        keyword: keyword || undefined,
+        keyword: debouncedKeyword || undefined,
       }),
   });
 
-  const handleSearch = (value: string) => {
-    setKeyword(value);
-    setPageNumber(1);
-  };
-
-  const handleClearSearch = () => {
-    setKeyword("");
-    setPageNumber(1);
+  // Reset pagination when search changes
+  const handleSearchChange = (value: string) => {
+    setSearchKeyword(value);
+    setFirst(0); // Reset to first page on new search
   };
 
   const onPageChange = (e: { first: number; rows: number }) => {
-    const newPageNumber = Math.floor(e.first / e.rows) + 1;
-    setPageNumber(newPageNumber);
+    setFirst(e.first);
     setPageSize(e.rows);
   };
 
@@ -63,20 +65,20 @@ export default function PricingListPage() {
       <div className="flex justify-end">
         <div className="w-full md:w-96">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search by SKU name, part code, or model..."
-              value={keyword}
-              onChange={(e) => handleSearch(e.target.value)}
+              value={searchKeyword}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full px-4 py-2.5 pl-10 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            {keyword && (
+            <i className="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            {searchKeyword && (
               <button
-                onClick={handleClearSearch}
+                onClick={() => handleSearchChange("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                <X className="h-4 w-4" />
+                <i className="pi pi-times" />
               </button>
             )}
           </div>
@@ -109,7 +111,7 @@ export default function PricingListPage() {
                   key={item.skuId}
                   className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
                 >
-                  <div className="p-4 flex flex-col relative">
+                  <div className="p-4 flex flex-col relative h-full">
                     {/* Warranty Badge - Top Right */}
                     <div className="absolute top-4 right-4">
                       <div className="relative w-24 h-10">
@@ -127,7 +129,7 @@ export default function PricingListPage() {
                     </div>
 
                     {/* Product Name - Top */}
-                    <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3 text-center break-words pr-28">
+                    <h3 className="font-semibold text-gray-900 text-base leading-tight mb-3 text-center line-clamp-2 pr-28">
                       {item.skuName}
                     </h3>
 
@@ -158,7 +160,7 @@ export default function PricingListPage() {
                     </div>
 
                     {/* Pricing Section - Bottom */}
-                    <div className="flex items-center justify-center gap-12 pt-3 border-t border-gray-100">
+                    <div className="flex items-start justify-center gap-12 pt-3 border-t border-gray-100 mt-auto">
                       {/* MRP */}
                       <div className="text-center">
                         <p className="text-xs text-gray-600 font-semibold mb-1">MRP</p>
@@ -172,9 +174,10 @@ export default function PricingListPage() {
                         <p className="text-xs text-gray-600 font-semibold mb-1">DP</p>
                         <div className="flex items-center gap-2">
                           <p className="text-2xl font-bold text-green-600 whitespace-nowrap">
-                            ₹{item.sellingPrice?.toFixed(2)}+
+                            ₹{item.sellingPrice?.toFixed(2)}
                           </p>
                         </div>
+                        <p className="text-xs text-gray-500">Exclusive of all taxes</p>
                       </div>
                     </div>
                   </div>
@@ -187,13 +190,13 @@ export default function PricingListPage() {
           {totalRecords > pageSize && (
             <div className="border border-gray-200 rounded-lg bg-white p-5">
               <Paginator
-                first={(pageNumber - 1) * pageSize}
+                first={first}
                 rows={pageSize}
                 totalRecords={totalRecords}
                 onPageChange={onPageChange}
                 template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
-                rowsPerPageOptions={[12, 20, 24, 48]}
+                rowsPerPageOptions={[6, 12, 24, 48]}
               />
             </div>
           )}

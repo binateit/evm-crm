@@ -17,6 +17,8 @@ import {
   Clock,
   History,
   ShoppingCart,
+  ClipboardList,
+  PackagePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -64,6 +66,15 @@ const navItems: NavItem[] = [
     icon: DollarSign,
     label: "Price List",
     href: "/price-list",
+  },
+  {
+    icon: ClipboardList,
+    label: "Stock Submissions",
+    href: "/stock-submissions",
+    children: [
+      { label: "New Submission", href: "/stock-submissions/create", icon: PackagePlus },
+      { label: "View Submissions", href: "/stock-submissions", icon: ClipboardList },
+    ],
   },
   // {
   //   icon: Target,
