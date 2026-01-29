@@ -323,6 +323,13 @@ export function PurchaseOrderForm({
     }
   }
 
+  // Auto-select delivery location when there's only one option
+  useEffect(() => {
+    if (deliveryLocations.length === 1 && !selectedDeliveryLocationId) {
+      setValue("deliveryLocationId", deliveryLocations[0]!.id);
+    }
+  }, [deliveryLocations, selectedDeliveryLocationId, setValue]);
+
   // Show error toast if promotion claim failed
   useEffect(() => {
     if (promotionClaimError) {

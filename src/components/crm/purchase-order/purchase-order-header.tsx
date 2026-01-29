@@ -130,7 +130,7 @@ export function PurchaseOrderHeader({
 
         <div className="flex flex-col gap-2 md:col-span-2">
           <label className="text-sm font-medium text-gray-700">
-            Delivery Location: <span className="text-red-600">*</span>
+            Shipping Address: <span className="text-red-600">*</span>
           </label>
           <Controller
             name="deliveryLocationId"
@@ -174,7 +174,7 @@ export function PurchaseOrderHeader({
                   )}
                   {selectedAddress && (
                     <div className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                      <span className="font-medium text-blue-700">Delivery Address: </span>
+                      <span className="font-medium text-blue-700">Shipping Address: </span>
                       {[
                         selectedAddress.address1,
                         selectedAddress.address2,
