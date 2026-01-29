@@ -49,6 +49,9 @@ export interface DistributorPricingDto {
   // Status
   statusName: string;
 
+  // End of Life Status
+  isEOL: boolean;
+
   // Price Effective Date
   priceEffectiveFrom: string | null; // ISO DateTime
 
@@ -80,6 +83,9 @@ export interface GetDistributorPricingListQuery {
   minSellingPrice?: number | null;
   maxSellingPrice?: number | null;
 
+  // EOL Filter
+  isEOL?: boolean | null;
+
   // Sorting
   sortBy?: "skuname" | "partcode" | "mrp" | "sellingprice" | "discount" | null;
   sortDirection?: "asc" | "desc" | null;
@@ -100,6 +106,7 @@ export const DEFAULT_PRICING_QUERY: GetDistributorPricingListQuery = {
   maxMRP: null,
   minSellingPrice: null,
   maxSellingPrice: null,
+  isEOL: null,
   sortBy: "partcode",
   sortDirection: "asc",
 };

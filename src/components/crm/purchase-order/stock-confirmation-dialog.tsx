@@ -47,10 +47,7 @@ export function StockConfirmationDialog({
                     <tr>
                       <th className="text-left py-2 px-3 font-medium text-yellow-900">Product</th>
                       <th className="text-right py-2 px-3 font-medium text-yellow-900">
-                        Requested
-                      </th>
-                      <th className="text-right py-2 px-3 font-medium text-yellow-900">
-                        Available
+                        Requested Qty
                       </th>
                     </tr>
                   </thead>
@@ -60,9 +57,6 @@ export function StockConfirmationDialog({
                         <td className="py-2 px-3 text-gray-900">{issue.skuName}</td>
                         <td className="py-2 px-3 text-right text-red-700 font-semibold">
                           {formatNumber(issue.requestedQuantity)}
-                        </td>
-                        <td className="py-2 px-3 text-right text-green-700 font-semibold">
-                          {formatNumber(issue.availableStock)}
                         </td>
                       </tr>
                     ))}

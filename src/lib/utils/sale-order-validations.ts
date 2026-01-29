@@ -76,7 +76,7 @@ export function validateStockQuantity(
       isValid: false,
       validationType: "stock_quantity",
       severity: "warning",
-      message: `${sku.skuName}: Insufficient stock. Requested: ${requestedQuantity}, Available: ${availableStock}`,
+      message: `${sku.skuName}: Insufficient stock. Requested: ${requestedQuantity}`,
       skuId: sku.id,
       skuName: sku.skuName || undefined,
       requestedQuantity,

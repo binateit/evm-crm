@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Paginator } from "primereact/paginator";
+import { Checkbox } from "primereact/checkbox";
 
 import { PageBreadcrumb, PageHeader } from "@/components/ui";
 import { useDebounce } from "@/hooks";
@@ -21,17 +22,21 @@ export default function PricingListPage() {
   const [first, setFirst] = useState(0);
   const [pageSize, setPageSize] = useState(12);
 
+  // EOL filter state
+  const [showEOL, setShowEOL] = useState<boolean | null>(null);
+
   // Calculate current page number
   const pageNumber = Math.floor(first / pageSize) + 1;
 
   // Pricing list query - auto fetches when dependencies change
   const { data, isLoading } = useQuery({
-    queryKey: ["pricing-list", debouncedKeyword, pageNumber, pageSize],
+    queryKey: ["pricing-list", debouncedKeyword, pageNumber, pageSize, showEOL],
     queryFn: () =>
       pricingService.getMyPricingList({
         pageNumber,
         pageSize,
         keyword: debouncedKeyword || undefined,
+        isEOL: showEOL,
       }),
   });
 
@@ -61,8 +66,51 @@ export default function PricingListPage() {
 
       <PageHeader title="EVM Price List" description="View current pricing for all products" />
 
-      {/* Search Bar */}
-      <div className="flex justify-end">
+      {/* Search Bar and Filters */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+        {/* EOL Filter Checkboxes */}
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              inputId="showAll"
+              checked={showEOL === null}
+              onChange={() => {
+                setShowEOL(null);
+                setFirst(0);
+              }}
+            />
+            <label htmlFor="showAll" className="text-sm text-gray-700 cursor-pointer">
+              Show All Products
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              inputId="showActive"
+              checked={showEOL === false}
+              onChange={() => {
+                setShowEOL(false);
+                setFirst(0);
+              }}
+            />
+            <label htmlFor="showActive" className="text-sm text-gray-700 cursor-pointer">
+              Active Products Only
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              inputId="showEOL"
+              checked={showEOL === true}
+              onChange={() => {
+                setShowEOL(true);
+                setFirst(0);
+              }}
+            />
+            <label htmlFor="showEOL" className="text-sm text-gray-700 cursor-pointer">
+              EOL Products Only
+            </label>
+          </div>
+        </div>
+
         <div className="w-full md:w-96">
           <div className="relative">
             <input
@@ -109,9 +157,20 @@ export default function PricingListPage() {
               return (
                 <div
                   key={item.skuId}
-                  className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
+                  className={`border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                    item.isEOL ? "border-orange-400 bg-orange-50/30" : "border-gray-200 bg-white"
+                  }`}
                 >
                   <div className="p-4 flex flex-col relative h-full">
+                    {/* EOL Badge - Top Left */}
+                    {item.isEOL && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
+                          EOL
+                        </div>
+                      </div>
+                    )}
+
                     {/* Warranty Badge - Top Right */}
                     <div className="absolute top-4 right-4">
                       <div className="relative w-24 h-10">

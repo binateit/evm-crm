@@ -66,7 +66,8 @@ export function CreateOrderForm({
       const addresses = await shippingAddressService.getByDistributor(distributorId);
       setShippingAddresses(addresses);
 
-      // Auto-select default address
+      // Auto-select address (default or first available)
+      // This works for both single and multiple address scenarios
       const defaultAddress = addresses.find((addr) => addr.isDefault);
       if (defaultAddress) {
         setSelectedAddressId(defaultAddress.id);
@@ -253,17 +254,55 @@ export function CreateOrderForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2">Shipping Address *</label>
-            <Dropdown
-              value={selectedAddressId}
-              onChange={(e) => setSelectedAddressId(e.value)}
-              options={shippingAddresses}
-              optionLabel="addressName"
-              optionValue="id"
-              placeholder="Select shipping address"
-              className="w-full"
-              itemTemplate={addressOptionTemplate}
-              disabled={loadingAddresses}
-            />
+            {shippingAddresses.length === 1 ? (
+              // Show as label when single address
+              <div className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                <span className="font-medium text-blue-700">Shipping Address: </span>
+                {[
+                  shippingAddresses[0]?.address1,
+                  shippingAddresses[0]?.address2,
+                  shippingAddresses[0]?.city,
+                  shippingAddresses[0]?.stateName,
+                  shippingAddresses[0]?.pincode,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </div>
+            ) : (
+              // Show dropdown when multiple addresses
+              <>
+                <Dropdown
+                  value={selectedAddressId}
+                  onChange={(e) => setSelectedAddressId(e.value)}
+                  options={shippingAddresses}
+                  optionLabel="addressName"
+                  optionValue="id"
+                  placeholder="Select shipping address"
+                  className="w-full"
+                  itemTemplate={addressOptionTemplate}
+                  disabled={loadingAddresses}
+                />
+                {selectedAddressId && (
+                  <div className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 mt-2">
+                    <span className="font-medium text-blue-700">Shipping Address: </span>
+                    {(() => {
+                      const selectedAddress = shippingAddresses.find(
+                        (addr) => addr.id === selectedAddressId
+                      );
+                      return [
+                        selectedAddress?.address1,
+                        selectedAddress?.address2,
+                        selectedAddress?.city,
+                        selectedAddress?.stateName,
+                        selectedAddress?.pincode,
+                      ]
+                        .filter(Boolean)
+                        .join(", ");
+                    })()}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div>

@@ -128,32 +128,67 @@ export function PurchaseOrderHeader({
           </p>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 md:col-span-2">
           <label className="text-sm font-medium text-gray-700">
             Delivery Location: <span className="text-red-600">*</span>
           </label>
           <Controller
             name="deliveryLocationId"
             control={control}
-            render={({ field }) => (
-              <Dropdown
-                value={field.value}
-                onChange={(e) => field.onChange(e.value)}
-                options={deliveryLocations}
-                optionLabel="addressName"
-                optionValue="id"
-                placeholder="Select an additional address"
-                filter
-                loading={loadingLocations}
-                className="h-11"
-                itemTemplate={(item: DistributorShippingAddressDto) => (
-                  <div className="flex flex-col py-1">
-                    <div className="font-medium">{item.addressName}</div>
-                    <div className="text-sm text-gray-500">{item.address1},</div>
-                  </div>
-                )}
-              />
-            )}
+            render={({ field }) => {
+              const selectedAddress = deliveryLocations.find((loc) => loc.id === field.value);
+              const hasSingleAddress = deliveryLocations.length === 1;
+
+              return (
+                <div className="flex flex-col gap-2">
+                  {/* Show dropdown only when multiple addresses */}
+                  {!hasSingleAddress && (
+                    <Dropdown
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.value)}
+                      options={deliveryLocations}
+                      optionLabel="addressName"
+                      optionValue="id"
+                      placeholder="Select delivery location"
+                      filter
+                      loading={loadingLocations}
+                      className="h-11"
+                      valueTemplate={(option: DistributorShippingAddressDto | null) =>
+                        option ? (
+                          <span className="text-gray-900">{option.addressName}</span>
+                        ) : (
+                          <span className="text-gray-400">Select delivery location</span>
+                        )
+                      }
+                      itemTemplate={(item: DistributorShippingAddressDto) => (
+                        <div className="flex flex-col py-1">
+                          <div className="font-medium">{item.addressName}</div>
+                          <div className="text-sm text-gray-500 truncate max-w-[500px]">
+                            {[item.address1, item.address2, item.city, item.stateName, item.pincode]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </div>
+                        </div>
+                      )}
+                    />
+                  )}
+                  {selectedAddress && (
+                    <div className="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                      <span className="font-medium text-blue-700">Delivery Address: </span>
+                      {[
+                        selectedAddress.address1,
+                        selectedAddress.address2,
+                        selectedAddress.city,
+                        selectedAddress.stateName,
+                        selectedAddress.pincode,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </div>
+                  )}
+                </div>
+              );
+            }}
           />
           {errors.deliveryLocationId && (
             <small className="text-red-600">{errors.deliveryLocationId.message}</small>
