@@ -23,18 +23,25 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       try {
         const distributor = await distributorService.getMyProfile();
         console.log("[Terms Check] Distributor profile:", distributor);
-        console.log("[Terms Check] Terms accepted at:", distributor?.termsAcceptedAt);
 
-        if (distributor && !distributor.termsAcceptedAt) {
-          console.log("[Terms Check] Terms NOT accepted - showing modal");
-          setShowTermsModal(true);
+        // Only show modal if we successfully fetched the profile AND terms not accepted
+        if (distributor) {
+          console.log("[Terms Check] Terms accepted at:", distributor?.termsAcceptedAt);
+
+          if (!distributor.termsAcceptedAt) {
+            console.log("[Terms Check] Terms NOT accepted - showing modal");
+            setShowTermsModal(true);
+          } else {
+            console.log("[Terms Check] Terms already accepted");
+          }
         } else {
-          console.log("[Terms Check] Terms already accepted or profile not found");
+          console.log("[Terms Check] Profile not found - skipping terms check");
         }
 
         setTermsChecked(true);
       } catch (error) {
         console.error("[Terms Check] Error:", error);
+        // Don't show modal on error - just mark as checked
         setTermsChecked(true);
       }
     }
