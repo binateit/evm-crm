@@ -85,7 +85,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
         <div
           className={cn(
             "fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           )}
         >
           <AppSidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
