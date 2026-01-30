@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -116,19 +116,23 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const isPrimaryContact = session?.user?.isPrimaryContact ?? false;
 
   // Build nav items dynamically based on user role
-  const dynamicNavItems: NavItem[] = [
-    ...navItems,
-    // Add "Manage Contacts" for primary contacts only
-    ...(isPrimaryContact
-      ? [
-          {
-            icon: Users,
-            label: "Manage Contacts",
-            href: "/contacts",
-          },
-        ]
-      : []),
-  ];
+  // Memoize to prevent infinite loop in useEffect
+  const dynamicNavItems: NavItem[] = useMemo(
+    () => [
+      ...navItems,
+      // Add "Manage Contacts" for primary contacts only
+      ...(isPrimaryContact
+        ? [
+            {
+              icon: Users,
+              label: "Manage Contacts",
+              href: "/contacts",
+            },
+          ]
+        : []),
+    ],
+    [isPrimaryContact]
+  );
 
   // Auto-expand parent items that contain the active route
   useEffect(() => {
