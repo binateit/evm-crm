@@ -19,7 +19,6 @@ import {
   ShoppingCart,
   ClipboardList,
   PackagePlus,
-  Target,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
@@ -78,12 +77,12 @@ const navItems: NavItem[] = [
       { label: "View Submissions", href: "/stock-submissions", icon: ClipboardList },
     ],
   },
-  {
-    icon: Target,
-    label: "My Targets & Incentives",
-    href: "/targets",
-    children: [{ label: "View My Targets", href: "/targets", icon: Target }],
-  },
+  // {
+  //   icon: Target,
+  //   label: "My Targets & Incentives",
+  //   href: "/targets",
+  //   children: [{ label: "View My Targets", href: "/targets", icon: Target }],
+  // },
   // {
   //   icon: Package,
   //   label: "Add / Update My Stock",

@@ -29,7 +29,6 @@ interface ColumnConfig {
 
 const AVAILABLE_COLUMNS: ColumnConfig[] = [
   { key: "partCode", label: "Part Code", required: true, width: "min-w-[200px]" },
-  { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
   { key: "quantity", label: "Quantity", required: true, width: "min-w-[140px]" },
   { key: "rate", label: "Rate", required: true, width: "min-w-[120px]" },
   { key: "discount", label: "Discount %", required: true, width: "min-w-[120px]" },
@@ -422,9 +421,6 @@ export function PurchaseOrderItemsTableV2({
                   Part Code *
                 </th>
               )}
-              {isColumnVisible("stock") && (
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-700">Stock</th>
-              )}
               {isColumnVisible("quantity") && (
                 <th className="text-center px-3 py-3 text-xs font-semibold text-gray-700">
                   Quantity *
@@ -558,24 +554,6 @@ export function PurchaseOrderItemsTableV2({
                               }}
                             />
                           )}
-                        </td>
-                      )}
-
-                      {isColumnVisible("stock") && (
-                        <td className="py-2 px-3 text-center">
-                          <span
-                            className={`font-semibold ${
-                              item.availableStock !== undefined
-                                ? item.availableStock > 0
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {item.availableStock !== undefined
-                              ? formatNumber(item.availableStock)
-                              : "-"}
-                          </span>
                         </td>
                       )}
 
