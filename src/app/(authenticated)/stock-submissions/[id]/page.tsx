@@ -160,7 +160,6 @@ export default function StockSubmissionDetailPage({ params }: PageProps) {
             <div>
               <label className="text-sm text-gray-500 block mb-1">Distributor</label>
               <p className="text-base font-medium text-gray-900">{submission.distributorName}</p>
-              <p className="text-sm text-gray-600">{submission.distributorCode}</p>
             </div>
 
             <div>

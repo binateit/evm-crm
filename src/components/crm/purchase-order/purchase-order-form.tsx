@@ -169,6 +169,18 @@ export function PurchaseOrderForm({
     },
   });
 
+  // Auto-select shipping address when delivery locations are loaded
+  useEffect(() => {
+    if (deliveryLocations.length > 0 && !watch("deliveryLocationId")) {
+      // Find default address or use first one
+      const defaultAddress = deliveryLocations.find((addr) => addr.isDefault);
+      const addressToSelect = defaultAddress || deliveryLocations[0];
+      if (addressToSelect) {
+        setValue("deliveryLocationId", addressToSelect.id);
+      }
+    }
+  }, [deliveryLocations, setValue, watch]);
+
   // Watch for changes - single source of truth from form state
   const selectedPaymentTypeId = watch("paymentTypeId");
   const selectedDeliveryLocationId = watch("deliveryLocationId");
@@ -455,7 +467,7 @@ export function PurchaseOrderForm({
     // Each item in the new structure already has availableStock from the table component
     const itemsWithSKUs = data.items
       .filter((item) => item.skuId) // Only items with SKU selected
-      .map((item) => ({
+      .map((item, index) => ({
         sku: {
           id: item.skuId,
           skuCode: item.skuCode || null,
@@ -466,16 +478,15 @@ export function PurchaseOrderForm({
           cdc: item.discountPercent,
         },
         quantity: item.quantity,
-        rowIndex: 0, // Not needed anymore but kept for compatibility
+        rowIndex: index,
       }));
 
-    // Validate order (paymentTypeId: 1 = Credit, 2 = Advance)
-    const result = validateOrder(
-      distributorDetails,
-      itemsWithSKUs,
-      orderTotal,
-      selectedPaymentTypeId
-    );
+    // Get payment type name from payment types list
+    const selectedPaymentType = paymentTypes.find((pt) => pt.id === selectedPaymentTypeId);
+    const paymentTypeName = selectedPaymentType?.name || "";
+
+    // Validate order (payment type: "Credit" or "Advance")
+    const result = validateOrder(distributorDetails, itemsWithSKUs, orderTotal, paymentTypeName);
 
     setValidationResult(result);
 
@@ -485,7 +496,7 @@ export function PurchaseOrderForm({
         blockingErrors: result.blockingErrors,
         stockIssues: result.stockIssues,
         orderTotal,
-        paymentTypeId: selectedPaymentTypeId,
+        paymentType: paymentTypeName,
       });
     }
 

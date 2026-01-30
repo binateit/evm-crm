@@ -22,15 +22,26 @@ interface OrderItem {
 }
 
 /**
- * Validate credit limit - only applies to Credit payment type (ID: 1)
+ * Validate credit limit - only applies to "Credit" payment type
+ * Credit Limit = 0 means unlimited credit, skip validation
  */
 export function validateCreditLimit(
   distributor: DistributorDto | DistributorForSaleOrderDto,
   orderTotal: number,
-  paymentTypeId: number
+  paymentType: string
 ): ValidationResult {
-  // Credit limit only applies to Credit payment type (ID: 1)
-  if (paymentTypeId !== 1) {
+  // Credit limit only applies to Credit payment type
+  if (paymentType !== "Credit") {
+    return {
+      isValid: true,
+      validationType: "credit_limit",
+      severity: "error",
+      message: "",
+    };
+  }
+
+  // Credit Limit = 0 means unlimited credit, skip validation
+  if (!distributor.creditLimit || distributor.creditLimit === 0) {
     return {
       isValid: true,
       validationType: "credit_limit",
@@ -139,14 +150,14 @@ export function validateOrder(
   distributorDetails: DistributorDto | DistributorForSaleOrderDto,
   items: OrderItem[],
   orderTotal: number,
-  paymentTypeId: number
+  paymentType: string
 ): OrderValidationResult {
   const blockingErrors: ValidationResult[] = [];
   const stockIssues: StockIssue[] = [];
   const warnings: ValidationResult[] = [];
 
   // 1. Validate credit limit (order-level)
-  const creditCheck = validateCreditLimit(distributorDetails, orderTotal, paymentTypeId);
+  const creditCheck = validateCreditLimit(distributorDetails, orderTotal, paymentType);
   if (!creditCheck.isValid) {
     blockingErrors.push(creditCheck);
   }
@@ -163,12 +174,12 @@ export function validateOrder(
     const stockCheck = validateStockQuantity(item.sku, item.quantity);
     if (!stockCheck.isValid) {
       stockIssues.push({
+        rowIndex: item.rowIndex,
         skuId: item.sku.id,
         skuCode: null, // Can be added if available in SKU data
         skuName: item.sku.skuName,
         requestedQuantity: item.quantity,
         availableStock: item.sku.availableStock ?? 0,
-        shortfall: item.quantity - (item.sku.availableStock ?? 0),
       });
       warnings.push(stockCheck);
     }

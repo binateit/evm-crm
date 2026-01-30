@@ -80,16 +80,6 @@ export default function ProfilePage() {
               </div>
 
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
-                  <FileText className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Distributor Code</p>
-                  <p className="font-medium">{distributor.distributorCode || "N/A"}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
                   <User className="w-5 h-5 text-green-600" />
                 </div>
@@ -146,7 +136,7 @@ export default function ProfilePage() {
                   <CreditCard className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-500">Credit Limit</span>
                 </div>
-                <span className="font-medium">{formatCurrency(distributor.creditLimit)}</span>
+                <span className="font-medium">{formatCurrency(distributor.creditLimit ?? 0)}</span>
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -163,9 +153,9 @@ export default function ProfilePage() {
                   <span className="text-sm text-gray-500">Outstanding Balance</span>
                 </div>
                 <span
-                  className={`font-medium ${distributor.outstandingBalance > 0 ? "text-red-600" : "text-green-600"}`}
+                  className={`font-medium ${(distributor.outstandingBalance ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}
                 >
-                  {formatCurrency(distributor.outstandingBalance)}
+                  {formatCurrency(distributor.outstandingBalance ?? 0)}
                 </span>
               </div>
 

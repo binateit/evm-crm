@@ -10,7 +10,6 @@ export function useDistributor() {
 
   return {
     distributorId: session?.user?.distributorId ?? "",
-    distributorCode: session?.user?.distributorCode ?? "",
     distributorName: session?.user?.distributorName ?? "",
     isLoading: status === "loading",
     isAuthenticated: status === "authenticated",

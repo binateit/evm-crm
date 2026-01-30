@@ -19,6 +19,8 @@ import {
   ShoppingCart,
   ClipboardList,
   PackagePlus,
+  Target,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -76,12 +78,12 @@ const navItems: NavItem[] = [
       { label: "View Submissions", href: "/stock-submissions", icon: ClipboardList },
     ],
   },
-  // {
-  //   icon: Target,
-  //   label: "Target & Incentives",
-  //   href: "/targets",
-  //   children: [{ label: "View Targets", href: "/targets", icon: Target }],
-  // },
+  {
+    icon: Target,
+    label: "My Targets & Incentives",
+    href: "/targets",
+    children: [{ label: "View My Targets", href: "/targets", icon: Target }],
+  },
   // {
   //   icon: Package,
   //   label: "Add / Update My Stock",
@@ -98,27 +100,6 @@ const navItems: NavItem[] = [
     href: "/promotions",
     children: [{ label: "View all promotions", href: "/promotions", icon: Gift }],
   },
-  // {
-  //   icon: Newspaper,
-  //   label: "News & Engagements",
-  //   href: "/news",
-  //   children: [{ label: "View all News", href: "/news", icon: Newspaper }],
-  // },
-  // {
-  //   icon: HeadphonesIcon,
-  //   label: "Support & Feedbacks",
-  //   href: "/support",
-  // },
-  // {
-  //   icon: User,
-  //   label: "Profile",
-  //   href: "/profile",
-  // },
-  // {
-  //   icon: Users,
-  //   label: "My Contacts",
-  //   href: "/contacts",
-  // },
 ];
 
 interface AppSidebarProps {
@@ -131,10 +112,28 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
   const { data: session } = useSession();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  // Get isPrimaryContact from session (defaults to false for safety)
+  const isPrimaryContact = session?.user?.isPrimaryContact ?? false;
+
+  // Build nav items dynamically based on user role
+  const dynamicNavItems: NavItem[] = [
+    ...navItems,
+    // Add "Manage Contacts" for primary contacts only
+    ...(isPrimaryContact
+      ? [
+          {
+            icon: Users,
+            label: "Manage Contacts",
+            href: "/contacts",
+          },
+        ]
+      : []),
+  ];
+
   // Auto-expand parent items that contain the active route
   useEffect(() => {
     const newExpandedItems: string[] = [];
-    navItems.forEach((item) => {
+    dynamicNavItems.forEach((item) => {
       if (
         item.children?.some(
           (child) => pathname === child.href || pathname.startsWith(child.href + "/")
@@ -144,7 +143,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
       }
     });
     setExpandedItems(newExpandedItems);
-  }, [pathname]);
+  }, [pathname, dynamicNavItems]);
 
   // Auto-close drawer on route change (mobile only)
   useEffect(() => {
@@ -228,7 +227,7 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 flex flex-col gap-0.5 px-2.5 py-3 overflow-y-auto">
-        {navItems.map((item) => {
+        {dynamicNavItems.map((item) => {
           const hasChildren = item.children && item.children.length > 0;
           const isExpanded = expandedItems.includes(item.label);
           const active = isItemActive(item);
@@ -309,9 +308,6 @@ export function AppSidebar({ isOpen = true, onClose }: AppSidebarProps) {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-gray-900 truncate">
             {session?.user?.distributorName || "Distributor"}
-          </p>
-          <p className="text-xs text-gray-500 truncate">
-            {session?.user?.distributorCode || "Code"}
           </p>
         </div>
       </div>

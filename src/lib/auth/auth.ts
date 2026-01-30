@@ -64,11 +64,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             fullName: data.fullName,
             username: data.username,
             distributorId: data.distributorId,
-            distributorCode: data.distributorCode,
             distributorName: data.distributorName,
             accessToken: data.accessToken,
             refreshToken: data.refreshToken,
             accessTokenExpiry: data.accessTokenExpiry,
+            termsAcceptedAt: data.termsAcceptedAt || null,
+            isPrimaryContact: data.isPrimaryContact,
           };
 
           return user;
@@ -88,11 +89,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.fullName = user.fullName;
         token.username = user.username;
         token.distributorId = user.distributorId;
-        token.distributorCode = user.distributorCode;
         token.distributorName = user.distributorName;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token.accessTokenExpiry = user.accessTokenExpiry;
+        token.termsAcceptedAt = user.termsAcceptedAt || null;
+        token.isPrimaryContact = user.isPrimaryContact;
       }
       return token;
     },
@@ -104,8 +106,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.fullName = token.fullName;
         session.user.username = token.username;
         session.user.distributorId = token.distributorId;
-        session.user.distributorCode = token.distributorCode;
         session.user.distributorName = token.distributorName;
+        session.user.termsAcceptedAt = token.termsAcceptedAt || null;
+        session.user.isPrimaryContact = token.isPrimaryContact;
       }
       session.accessToken = token.accessToken;
       session.refreshToken = token.refreshToken;

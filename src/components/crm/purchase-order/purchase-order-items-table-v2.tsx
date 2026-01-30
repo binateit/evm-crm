@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "primereact/button";
 import { InputNumber } from "primereact/inputnumber";
 import AsyncSelect from "react-select/async";
@@ -29,10 +29,9 @@ interface ColumnConfig {
 
 const AVAILABLE_COLUMNS: ColumnConfig[] = [
   { key: "partCode", label: "Part Code", required: true, width: "min-w-[200px]" },
-  { key: "productName", label: "Product Name", required: false, width: "min-w-[250px]" },
-  // { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
+  { key: "stock", label: "Stock", required: true, width: "min-w-[100px]" },
   { key: "quantity", label: "Quantity", required: true, width: "min-w-[140px]" },
-  { key: "rate", label: "Rate (per unit)", required: true, width: "min-w-[120px]" },
+  { key: "rate", label: "Rate", required: true, width: "min-w-[120px]" },
   { key: "discount", label: "Discount %", required: true, width: "min-w-[120px]" },
   { key: "gst", label: "GST %", required: true, width: "min-w-[100px]" },
   { key: "totalAmount", label: "Total Amount", required: true, width: "min-w-[150px]" },
@@ -419,25 +418,20 @@ export function PurchaseOrderItemsTableV2({
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {isColumnVisible("partCode") && (
-                <th className="sticky left-0 z-20 bg-gray-50 text-left px-3 py-3 text-xs font-semibold text-gray-700 border-r border-gray-200">
+                <th className="text-left px-3 py-3 text-xs font-semibold text-gray-700">
                   Part Code *
                 </th>
               )}
-              {isColumnVisible("productName") && (
-                <th className="text-left px-3 py-3 text-xs font-semibold text-gray-700">
-                  Product Name
-                </th>
+              {isColumnVisible("stock") && (
+                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-700">Stock</th>
               )}
-              {/* {isColumnVisible("stock") && (
-                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Stock</th>
-              )} */}
               {isColumnVisible("quantity") && (
-                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">
+                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-700">
                   Quantity *
                 </th>
               )}
               {isColumnVisible("rate") && (
-                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Rate </th>
+                <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">Rate</th>
               )}
               {isColumnVisible("discount") && (
                 <th className="text-right px-3 py-3 text-xs font-semibold text-gray-700">
@@ -459,7 +453,7 @@ export function PurchaseOrderItemsTableV2({
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody>
             {items.length === 0 ? (
               <tr>
                 <td colSpan={visibleColumns.length} className="text-center py-8 text-gray-500">
@@ -469,6 +463,7 @@ export function PurchaseOrderItemsTableV2({
             ) : (
               items.map((item, index) => {
                 const isLocked = item.isLocked || false;
+                const columnCount = visibleColumns.length;
 
                 // Create a minimal AllocatedSkuDto from item data for AsyncSelect compatibility
                 const skuData: AllocatedSkuDto = {
@@ -483,180 +478,182 @@ export function PurchaseOrderItemsTableV2({
                 } as AllocatedSkuDto;
 
                 return (
-                  <tr
-                    key={item.rowId}
-                    className={`hover:bg-gray-50 ${isLocked ? "bg-emerald-50/40" : ""}`}
-                  >
-                    {isColumnVisible("partCode") && (
-                      <td
-                        className={`sticky left-0 z-10 py-2 px-2 border-r border-gray-200 ${
-                          isLocked ? "bg-emerald-50/40" : "bg-white"
-                        }`}
-                      >
-                        {isLocked ? (
-                          // Locked item - show read-only display with promotion badge
-                          <div className="min-w-[150px] flex items-center gap-2">
-                            <div className="flex-1">
-                              <div className="font-semibold text-gray-800">
-                                {item.skuName}
-                                {item.unitPrice === 0.01 && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
-                                    FREE
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-gray-500">{item.skuCode}</div>
-
-                              {item.unitPrice !== 0.01 && (
-                                <div className="text-xs text-emerald-600 font-semibold mt-1">
-                                  +{item.claimedFreeQuantity} FREE units included below
-                                </div>
-                              )}
-                            </div>
-                            {/* <i
-                              className="pi pi-lock text-emerald-600"
-                              title="Locked promotion item"
-                            /> */}
-                          </div>
-                        ) : (
-                          // Regular item - show AsyncSelect
-                          <AsyncSelect<SKUOption>
-                            instanceId={`sku-select-${index}`}
-                            value={
-                              item.skuId
-                                ? {
-                                    value: item.skuId,
-                                    label: `${item.skuCode || ""} - ${item.skuName || ""}`,
-                                    data: skuData,
-                                  }
-                                : null
-                            }
-                            loadOptions={loadSkuOptions}
-                            onChange={(option) => handleSkuSelect(index, option)}
-                            isClearable
-                            placeholder="Search by code/name..."
-                            className="min-w-[200px]"
-                            menuPortalTarget={document.body}
-                            formatOptionLabel={({ data }) => (
-                              <div className="py-1">
-                                <div className="font-semibold text-gray-800">{data.skuName}</div>
-                                <div className="text-xs text-gray-500">
-                                  {data.skuCode} • {formatCurrency(data.sellingPrice || 0)}
-                                </div>
-                              </div>
+                  <React.Fragment key={item.rowId}>
+                    {/* Row 1: Product Name Header */}
+                    <tr
+                      className={`border-t border-gray-200 ${isLocked ? "bg-emerald-50/60" : "bg-gray-50"}`}
+                    >
+                      <td colSpan={columnCount} className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-800">
+                            {item.skuName || "Select a product"}
+                            {item.skuCode && (
+                              <span className="text-gray-500 font-normal ml-1">
+                                ({item.skuCode})
+                              </span>
                             )}
-                            styles={{
-                              control: (base) => ({
-                                ...base,
-                                minHeight: "40px",
-                                borderColor: "#d1d5db",
-                              }),
-                              menuPortal: (base) => ({
-                                ...base,
-                                zIndex: 9999,
-                              }),
-                            }}
-                          />
-                        )}
+                          </span>
+                          {item.isOfferItem && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                              FREE
+                            </span>
+                          )}
+                          {!item.isOfferItem && (item.claimedFreeQuantity ?? 0) > 0 && (
+                            <span className="text-xs text-emerald-600 font-semibold">
+                              +{item.claimedFreeQuantity} FREE units included below
+                            </span>
+                          )}
+                        </div>
                       </td>
-                    )}
+                    </tr>
 
-                    {isColumnVisible("productName") && (
-                      <td className="py-2 px-3 text-sm text-gray-700">{item.skuName || "-"}</td>
-                    )}
+                    {/* Row 2: Data Fields */}
+                    <tr className={`${isLocked ? "bg-emerald-50/40" : "bg-white"}`}>
+                      {isColumnVisible("partCode") && (
+                        <td className="py-2 px-3">
+                          {isLocked ? (
+                            <div className="min-w-[150px] flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
+                              <span className="text-sm text-gray-700">{item.skuCode}</span>
+                            </div>
+                          ) : (
+                            <AsyncSelect<SKUOption>
+                              instanceId={`sku-select-${index}`}
+                              value={
+                                item.skuId
+                                  ? {
+                                      value: item.skuId,
+                                      label: item.skuCode || "",
+                                      data: skuData,
+                                    }
+                                  : null
+                              }
+                              loadOptions={loadSkuOptions}
+                              onChange={(option) => handleSkuSelect(index, option)}
+                              isClearable
+                              placeholder="Search..."
+                              className="min-w-[180px]"
+                              menuPortalTarget={document.body}
+                              formatOptionLabel={({ data }, { context }) =>
+                                context === "value" ? (
+                                  <span className="text-gray-700">{data.skuCode}</span>
+                                ) : (
+                                  <div className="py-1">
+                                    <div className="font-medium text-gray-800">{data.skuName}</div>
+                                    <div className="text-xs text-gray-500">
+                                      {data.skuCode} • {formatCurrency(data.sellingPrice || 0)}
+                                    </div>
+                                  </div>
+                                )
+                              }
+                              styles={{
+                                control: (base) => ({
+                                  ...base,
+                                  minHeight: "40px",
+                                  borderColor: "#d1d5db",
+                                }),
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                              }}
+                            />
+                          )}
+                        </td>
+                      )}
 
-                    {/* {isColumnVisible("stock") && (
-                      <td className="py-2 px-3 text-sm text-right">
-                        <span
-                          className={`font-medium ${
-                            item.availableStock !== undefined
-                              ? item.availableStock > 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          {item.availableStock !== undefined
-                            ? formatNumber(item.availableStock)
-                            : "-"}
-                        </span>
-                      </td>
-                    )} */}
+                      {isColumnVisible("stock") && (
+                        <td className="py-2 px-3 text-center">
+                          <span
+                            className={`font-semibold ${
+                              item.availableStock !== undefined
+                                ? item.availableStock > 0
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {item.availableStock !== undefined
+                              ? formatNumber(item.availableStock)
+                              : "-"}
+                          </span>
+                        </td>
+                      )}
 
-                    {isColumnVisible("quantity") && (
-                      <td className="py-2 px-3">
-                        {isLocked ? (
-                          // Locked item - show read-only quantity with formatting
-                          <div className="min-w-[100px] text-right font-semibold text-gray-900 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200">
-                            {formatNumber(item.quantity)}
-                          </div>
-                        ) : (
-                          <InputNumber
-                            value={item.quantity}
-                            onValueChange={(e) => handleQuantityChange(index, e.value)}
-                            min={1}
-                            className="w-full"
-                            inputClassName="text-right font-semibold"
-                            locale="en-IN"
-                            useGrouping={true}
-                          />
-                        )}
-                      </td>
-                    )}
+                      {isColumnVisible("quantity") && (
+                        <td className="py-2 px-3">
+                          {isLocked ? (
+                            <div className="w-20 text-center font-semibold text-gray-900 px-2 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                              {formatNumber(item.quantity)}
+                            </div>
+                          ) : (
+                            <InputNumber
+                              value={item.quantity || null}
+                              onValueChange={(e) => handleQuantityChange(index, e.value)}
+                              min={1}
+                              className="w-20"
+                              inputClassName="text-center font-semibold"
+                              locale="en-IN"
+                              useGrouping={true}
+                              placeholder="Qty"
+                            />
+                          )}
+                        </td>
+                      )}
 
-                    {isColumnVisible("rate") && (
-                      <td className="py-2 px-3 text-sm text-right font-medium text-gray-900">
-                        {formatCurrency(item.unitPrice)}
-                      </td>
-                    )}
+                      {isColumnVisible("rate") && (
+                        <td className="py-2 px-3 text-sm text-right font-medium text-gray-900">
+                          {formatCurrency(item.unitPrice)}
+                        </td>
+                      )}
 
-                    {isColumnVisible("discount") && (
-                      <td className="py-2 px-3 text-sm text-right text-gray-700">
-                        {item.discountPercent}%
-                      </td>
-                    )}
+                      {isColumnVisible("discount") && (
+                        <td className="py-2 px-3 text-sm text-right text-gray-700">
+                          {item.discountPercent}%
+                        </td>
+                      )}
 
-                    {isColumnVisible("gst") && (
-                      <td className="py-2 px-3 text-sm text-right text-gray-700">
-                        {item.taxPercent}%
-                      </td>
-                    )}
+                      {isColumnVisible("gst") && (
+                        <td className="py-2 px-3 text-sm text-right text-gray-700">
+                          {item.taxPercent}%
+                        </td>
+                      )}
 
-                    {isColumnVisible("totalAmount") && (
-                      <td className="py-2 px-3 text-sm text-right font-semibold text-gray-900">
-                        {formatCurrency(getLineTotal(item))}
-                      </td>
-                    )}
+                      {isColumnVisible("totalAmount") && (
+                        <td className="py-2 px-3 text-sm text-right font-semibold text-gray-900">
+                          {formatCurrency(getLineTotal(item))}
+                        </td>
+                      )}
 
-                    {isColumnVisible("actions") && (
-                      <td className="py-2 px-3 text-center">
-                        {isLocked && item.promotionId ? (
-                          // Promotion item - show "Remove Promotion" button
-                          <Button
-                            type="button"
-                            icon="pi pi-times"
-                            severity="warning"
-                            text
-                            rounded
-                            onClick={() => handleRemovePromotion(item.promotionId!)}
-                            className="p-2"
-                            tooltip="Remove promotion and all related items"
-                          />
-                        ) : (
-                          // Regular item - show delete button
-                          <Button
-                            type="button"
-                            icon="pi pi-trash"
-                            severity="danger"
-                            text
-                            rounded
-                            onClick={() => handleRemoveItem(index)}
-                            className="p-2"
-                          />
-                        )}
-                      </td>
-                    )}
-                  </tr>
+                      {isColumnVisible("actions") && (
+                        <td className="py-2 px-3 text-center">
+                          {isLocked && item.promotionId ? (
+                            // Promotion item - show "Remove Promotion" button
+                            <Button
+                              type="button"
+                              icon="pi pi-times"
+                              severity="warning"
+                              text
+                              rounded
+                              onClick={() => handleRemovePromotion(item.promotionId!)}
+                              className="p-2"
+                              tooltip="Remove promotion and all related items"
+                            />
+                          ) : (
+                            // Regular item - show delete button
+                            <Button
+                              type="button"
+                              icon="pi pi-trash"
+                              severity="danger"
+                              text
+                              rounded
+                              onClick={() => handleRemoveItem(index)}
+                              className="p-2"
+                            />
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  </React.Fragment>
                 );
               })
             )}

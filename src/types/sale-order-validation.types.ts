@@ -25,12 +25,12 @@ export interface ValidationResult {
 }
 
 export interface StockIssue {
+  rowIndex: number;
   skuId: string;
   skuCode: string | null;
   skuName: string | null;
   requestedQuantity: number;
   availableStock: number;
-  shortfall: number;
 }
 
 export interface OrderValidationResult {

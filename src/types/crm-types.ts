@@ -11,7 +11,6 @@ export * from "./sale-order-validation.types";
 
 export interface DistributorDto {
   id: string;
-  distributorCode: string | null;
   distributorName: string | null;
   contactPerson: string | null;
   emailAddress: string | null;
@@ -25,8 +24,8 @@ export interface DistributorDto {
   billingStateId: number | null;
   billingDistrictId: number | null;
   billingPincode: string | null;
-  creditLimit: number;
-  creditDays: number;
+  creditLimit: number | null;
+  creditDays: number | null;
   outstandingBalance: number;
   isActive: boolean;
   category: string | null;
@@ -45,7 +44,6 @@ export interface DistributorDto {
 
 export interface DistributorDropdownDto {
   id: string;
-  distributorCode: string | null;
   distributorName: string | null;
 }
 
@@ -60,8 +58,8 @@ export interface DistributorForSaleOrderDto {
   billingAddress4: string | null;
   billingStateName: string | null;
   billingPincode: string | null;
-  creditLimit: number;
-  creditDays: number;
+  creditLimit: number | null;
+  creditDays: number | null;
   outstandingBalance: number;
   availableCredit: number;
   canPlaceOrder: boolean;
@@ -122,7 +120,6 @@ export interface SaleOrderDetailDto {
   expectedDeliveryDate: string | null;
   distributorId: string;
   distributorName: string | null;
-  distributorCode: string | null;
   shippingAddress: string | null;
   subTotal: number;
   discountAmount: number;
@@ -162,7 +159,6 @@ export interface SaleOrderListDto {
   orderDate: string;
   distributorId: string;
   distributorName: string | null;
-  distributorCode: string | null;
   statusId: number;
   statusName: string | null;
   itemCount: number;
@@ -538,7 +534,6 @@ export interface DistributorStockSubmissionDetailDto {
   id: string;
   submissionNumber: string;
   distributorId: string;
-  distributorCode: string;
   distributorName: string;
   submissionPeriod: string; // DateOnly
   periodDisplay: string;
@@ -599,3 +594,43 @@ export type DistributorStockSubmissionListDtoPaginationResponse =
   PaginatedResponse<DistributorStockSubmissionListDto>;
 export type DistributorStockSubmissionListDtoPaginationResponseResult =
   Result<DistributorStockSubmissionListDtoPaginationResponse>;
+
+// ============ Distributor Contact Types ============
+
+export interface DistributorContactDto {
+  id: string;
+  distributorId: string;
+  contactName: string | null;
+  emailAddress: string; // Required
+  mobileNumber: string | null;
+  isPrimary: boolean;
+  appUserId: string | null;
+  isActive: boolean;
+}
+
+export interface CreateDistributorContactCommand {
+  distributorId: string;
+  contactName: string;
+  emailAddress: string;
+  mobileNumber: string | null;
+  isPrimary: boolean;
+  password: string;
+  roleId: string;
+}
+
+export interface UpdateDistributorContactCommand {
+  id: string;
+  contactName: string;
+  emailAddress: string;
+  mobileNumber: string | null;
+  isPrimary: boolean;
+  isActive: boolean;
+}
+
+export interface ResetDistributorContactPasswordCommand {
+  contactId: string;
+  newPassword: string;
+}
+
+export type DistributorContactDtoListResult = Result<DistributorContactDto[]>;
+export type DistributorContactDtoResult = Result<DistributorContactDto>;

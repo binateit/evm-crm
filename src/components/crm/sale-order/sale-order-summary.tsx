@@ -57,10 +57,6 @@ export function SaleOrderSummary({ saleOrder }: SaleOrderSummaryProps) {
                 <span className="font-semibold">{saleOrder.distributorName || "N/A"}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Code:</span>
-                <span>{saleOrder.distributorCode || "N/A"}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-600">Shipping Address:</span>
                 <span className="text-right max-w-xs">{saleOrder.shippingAddress || "N/A"}</span>
               </div>

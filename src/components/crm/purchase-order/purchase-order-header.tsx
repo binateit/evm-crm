@@ -149,7 +149,7 @@ export function PurchaseOrderHeader({
                       options={deliveryLocations}
                       optionLabel="addressName"
                       optionValue="id"
-                      placeholder="Select delivery location"
+                      placeholder="Select shipping address"
                       filter
                       loading={loadingLocations}
                       className="h-11"
@@ -157,7 +157,7 @@ export function PurchaseOrderHeader({
                         option ? (
                           <span className="text-gray-900">{option.addressName}</span>
                         ) : (
-                          <span className="text-gray-400">Select delivery location</span>
+                          <span className="text-gray-400">Select shipping address</span>
                         )
                       }
                       itemTemplate={(item: DistributorShippingAddressDto) => (

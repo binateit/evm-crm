@@ -9,9 +9,9 @@ declare module "next-auth" {
       fullName: string;
       username: string;
       distributorId: string;
-      distributorCode: string;
       distributorName: string;
       termsAcceptedAt?: string | null;
+      isPrimaryContact: boolean;
     };
     accessToken: string;
     refreshToken: string;
@@ -24,12 +24,12 @@ declare module "next-auth" {
     fullName: string;
     username: string;
     distributorId: string;
-    distributorCode: string;
     distributorName: string;
     accessToken: string;
     refreshToken: string;
     accessTokenExpiry: string;
     termsAcceptedAt?: string | null;
+    isPrimaryContact: boolean;
   }
 }
 
@@ -40,11 +40,11 @@ declare module "next-auth/jwt" {
     fullName: string;
     username: string;
     distributorId: string;
-    distributorCode: string;
     distributorName: string;
     accessToken: string;
     refreshToken: string;
     accessTokenExpiry: string;
     termsAcceptedAt?: string | null;
+    isPrimaryContact: boolean;
   }
 }

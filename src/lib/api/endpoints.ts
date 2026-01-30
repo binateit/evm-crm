@@ -101,4 +101,26 @@ export const ENDPOINTS = {
     DELETE: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}`,
     SUBMIT: (id: string) => `/v1/crm/distributorstocksubmissions/my/${id}/submit`,
   },
+
+  // Targets - Distributor's assigned targets (read-only)
+  TARGET: {
+    MY_TARGETS: (distributorId: string) => `/v1/crm/targets/distributor/${distributorId}`,
+    BY_ID: (id: string) => `/v1/crm/targets/${id}`,
+  },
+
+  // Distributor Contacts - Self-service contact management
+  DISTRIBUTOR_CONTACT: {
+    BY_ID: (id: string) => `/v1/crm/DistributorContacts/${id}`,
+    BY_DISTRIBUTOR: (distributorId: string) =>
+      `/v1/crm/DistributorContacts/by-distributor/${distributorId}`,
+    CREATE: "/v1/crm/DistributorContacts",
+    UPDATE: (id: string) => `/v1/crm/DistributorContacts/${id}`,
+    DELETE: (id: string) => `/v1/crm/DistributorContacts/${id}`,
+    RESET_PASSWORD: (id: string) => `/v1/crm/DistributorContacts/${id}/reset-password`,
+  },
+
+  // Roles - For dropdown lists
+  ROLE: {
+    DISTRIBUTOR_ROLES: "/v1/auth/roles/dropdown/distributor",
+  },
 } as const;
